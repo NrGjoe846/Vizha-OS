@@ -271,12 +271,21 @@ export default function TicketsPage() {
                     )}
                   </td>
                   <td className="py-3 px-4">
-                    <button
-                      onClick={() => handleVerify(t.qrToken)}
-                      className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
-                    >
-                      Scan Token
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleVerify(t.qrToken)}
+                        className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline"
+                      >
+                        Scan Token
+                      </button>
+                      <span className="text-slate-300">&bull;</span>
+                      <a
+                        href={`/tickets/${t.ticketNumber}/print`}
+                        className="text-[11px] font-semibold text-slate-500 hover:text-slate-800 hover:underline"
+                      >
+                        Print Pass
+                      </a>
+                    </div>
                   </td>
                 </tr>
               ))}

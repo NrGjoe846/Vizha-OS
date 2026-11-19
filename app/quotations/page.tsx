@@ -12,7 +12,9 @@ import {
   Eye,
   Download,
   Calendar,
-  Building
+  Building,
+  Layers,
+  Sparkles
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -23,14 +25,25 @@ import { Modal } from '@/components/ui/Modal';
 import { formatCurrency } from '@/lib/format';
 
 export default function QuotationsPage() {
-  const { quotations, addQuotation, updateQuotationStatus, clients, events } = useERP();
+  const {
+    quotations,
+    addQuotation,
+    updateQuotationStatus,
+    generateMilestoneInvoices,
+    clients,
+    events
+  } = useERP();
+
   const [selectedQuotation, setSelectedQuotation] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [successBanner, setSuccessBanner] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
+    clientId: clients[0]?.id || '',
     clientName: clients[0]?.name || 'Rahul Oberoi',
     clientEmail: clients[0]?.email || 'rahul@oberoiglobal.com',
+    eventId: events[0]?.id || '',
     eventTitle: events[0]?.title || 'The Royal Oberoi Grand Wedding & Sangeet',
     issueDate: new Date().toISOString().split('T')[0],
     validUntil: '2026-12-31',
@@ -62,6 +75,17 @@ export default function QuotationsPage() {
     e.preventDefault();
     addQuotation(formData);
     setIsCreateModalOpen(false);
+    setSuccessBanner('Proposal created successfully as draft.');
+    setTimeout(() => setSuccessBanner(null), 4000);
+  };
+
+  const handleGenerateMilestones = (quoteId: string) => {
+    const invs = generateMilestoneInvoices(quoteId);
+    setSuccessBanner(`Successfully generated ${invs.length} structured milestone invoices (50% / 40% / 10%) in the accounts ledger.`);
+    setTimeout(() => setSuccessBanner(null), 5000);
+    if (selectedQuotation && selectedQuotation.id === quoteId) {
+      setSelectedQuotation({ ...selectedQuotation, milestonesGenerated: true });
+    }
   };
 
   const filteredQuotations = quotations.filter(q =>
@@ -75,7 +99,7 @@ export default function QuotationsPage() {
       {/* Page Header */}
       <PageHeader
         title="Proposals & Quotations"
-        description="Itemized commercial scopes of work, 18% GST calculations, client approval tracking, and printable estimates."
+        description="Itemized commercial scopes of work, 18% GST calculations, client approval tracking, and 1-click milestone invoice generation."
         badge={
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
             {quotations.length} Quotations
@@ -103,6 +127,16 @@ export default function QuotationsPage() {
         }
       />
 
+      {successBanner && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-lg text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+            <span>{successBanner}</span>
+          </div>
+          <button onClick={() => setSuccessBanner(null)} className="text-emerald-600 hover:text-emerald-900 font-bold ml-4">✕</button>
+        </div>
+      )}
+
       {/* Quotations Table */}
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -116,6 +150,7 @@ export default function QuotationsPage() {
                 <th className="py-3 px-4">18% GST</th>
                 <th className="py-3 px-4">Total Amount</th>
                 <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Billing Schedule</th>
                 <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -146,6 +181,23 @@ export default function QuotationsPage() {
                     >
                       {q.status}
                     </Badge>
+                  </td>
+                  <td className="py-3 px-4">
+                    {q.milestonesGenerated ? (
+                      <Badge variant="success">Milestones Invoiced</Badge>
+                    ) : q.status === 'approved' ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-[11px] h-7 bg-amber-50/60 border-amber-200 text-amber-900 hover:bg-amber-100/70"
+                        onClick={() => handleGenerateMilestones(q.id)}
+                        icon={<Layers className="w-3 h-3 text-amber-600" />}
+                      >
+                        Generate Milestones
+                      </Button>
+                    ) : (
+                      <span className="text-[11px] text-zinc-400 font-mono">Requires approval</span>
+                    )}
                   </td>
                   <td className="py-3 px-4 text-right space-x-1">
                     <Button
@@ -193,6 +245,16 @@ export default function QuotationsPage() {
           maxWidth="2xl"
           footer={
             <>
+              {selectedQuotation.status === 'approved' && !selectedQuotation.milestonesGenerated && (
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => handleGenerateMilestones(selectedQuotation.id)}
+                  icon={<Layers className="w-3.5 h-3.5" />}
+                >
+                  Generate Milestones (50% / 40% / 10%)
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -201,7 +263,7 @@ export default function QuotationsPage() {
               >
                 Print / PDF
               </Button>
-              <Button variant="primary" size="sm" onClick={() => setSelectedQuotation(null)}>
+              <Button variant="outline" size="sm" onClick={() => setSelectedQuotation(null)}>
                 Close
               </Button>
             </>
@@ -218,6 +280,11 @@ export default function QuotationsPage() {
                 <span className="text-[10px] font-mono uppercase text-zinc-400">Validity</span>
                 <p className="font-mono text-zinc-900 mt-0.5">Valid Until: {selectedQuotation.validUntil}</p>
                 <p className="text-zinc-500">Date: {selectedQuotation.issueDate}</p>
+                <div className="mt-1">
+                  <Badge variant={selectedQuotation.status === 'approved' ? 'success' : 'neutral'}>
+                    Status: {selectedQuotation.status}
+                  </Badge>
+                </div>
               </div>
             </div>
 
@@ -268,6 +335,28 @@ export default function QuotationsPage() {
                 </div>
               </div>
             </div>
+
+            {/* Structured Milestones Explanation */}
+            <div className="p-3 bg-zinc-50 border border-zinc-200 rounded-lg text-xs space-y-1">
+              <p className="font-semibold text-zinc-900 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-zinc-600" />
+                Standard 3-Stage Milestone Billing Structure
+              </p>
+              <div className="grid grid-cols-3 gap-2 pt-1 font-mono text-[11px] text-zinc-600">
+                <div className="p-2 bg-white rounded border border-zinc-200/60">
+                  <span className="font-semibold text-zinc-900 block">Stage 1: 50%</span>
+                  Advance token to book dates & lock venue.
+                </div>
+                <div className="p-2 bg-white rounded border border-zinc-200/60">
+                  <span className="font-semibold text-zinc-900 block">Stage 2: 40%</span>
+                  Production & setup advance due 14 days before.
+                </div>
+                <div className="p-2 bg-white rounded border border-zinc-200/60">
+                  <span className="font-semibold text-zinc-900 block">Stage 3: 10%</span>
+                  Post-event reconciliation & settlement.
+                </div>
+              </div>
+            </div>
           </div>
         </Modal>
       )}
@@ -298,6 +387,7 @@ export default function QuotationsPage() {
                 const c = clients.find(cl => cl.name === e.target.value);
                 setFormData({
                   ...formData,
+                  clientId: c?.id || '',
                   clientName: e.target.value,
                   clientEmail: c?.email || ''
                 });
@@ -311,7 +401,14 @@ export default function QuotationsPage() {
             <Select
               label="Associated Production Event"
               value={formData.eventTitle}
-              onChange={(e) => setFormData({ ...formData, eventTitle: e.target.value })}
+              onChange={(e) => {
+                const ev = events.find(event => event.title === e.target.value);
+                setFormData({
+                  ...formData,
+                  eventId: ev?.id || '',
+                  eventTitle: e.target.value
+                });
+              }}
             >
               {events.map(ev => (
                 <option key={ev.id} value={ev.title}>{ev.title}</option>

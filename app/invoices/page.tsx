@@ -12,7 +12,10 @@ import {
   FileText,
   Search,
   Eye,
-  DollarSign
+  DollarSign,
+  ShieldCheck,
+  Check,
+  X
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -24,9 +27,10 @@ import { StatCard } from '@/components/ui/StatCard';
 import { formatCurrency } from '@/lib/format';
 
 export default function InvoicesPage() {
-  const { invoices, addInvoice, recordPayment, clients, events } = useERP();
+  const { invoices, addInvoice, recordPayment, verifyClientRemittance, clients, events } = useERP();
   const [selectedInvoice, setSelectedInvoice] = useState<any | null>(null);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [isVerifyModalOpen, setIsVerifyModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -39,9 +43,11 @@ export default function InvoicesPage() {
 
   // Create invoice form
   const [invoiceData, setInvoiceData] = useState({
+    clientId: clients[0]?.id || '',
     clientName: clients[0]?.name || 'Rahul Oberoi',
     clientEmail: clients[0]?.email || 'rahul@oberoiglobal.com',
     clientGstin: clients[0]?.gstin || '27AABCO1234F1Z8',
+    eventId: events[0]?.id || '',
     eventTitle: events[0]?.title || 'The Royal Oberoi Grand Wedding',
     issueDate: new Date().toISOString().split('T')[0],
     dueDate: '2026-12-15',
@@ -49,7 +55,7 @@ export default function InvoicesPage() {
     taxRate: 18,
     taxAmount: 180000,
     totalAmount: 1180000,
-    notes: 'Payment milestone 1: Mobilization advance.',
+    milestoneTitle: 'Custom Milestone Advance',
     items: [
       {
         id: '1',
@@ -82,7 +88,8 @@ export default function InvoicesPage() {
   const filteredInvoices = invoices.filter(i =>
     i.invoiceNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
     i.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    i.eventTitle.toLowerCase().includes(searchQuery.toLowerCase())
+    i.eventTitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (i.milestoneTitle && i.milestoneTitle.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   return (
@@ -149,6 +156,7 @@ export default function InvoicesPage() {
             <thead className="bg-zinc-50 border-b border-zinc-200/80 text-zinc-500 font-mono uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Invoice #</th>
+                <th className="py-3 px-4">Milestone / Scope</th>
                 <th className="py-3 px-4">Client / GSTIN</th>
                 <th className="py-3 px-4">Production Event</th>
                 <th className="py-3 px-4">Due Date</th>
@@ -162,7 +170,25 @@ export default function InvoicesPage() {
             <tbody className="divide-y divide-zinc-100 text-zinc-700">
               {filteredInvoices.map((inv) => (
                 <tr key={inv.id} className="hover:bg-zinc-50/60 transition-colors">
-                  <td className="py-3 px-4 font-mono font-medium text-zinc-900">{inv.invoiceNo}</td>
+                  <td className="py-3 px-4 font-mono font-medium text-zinc-900">
+                    <div className="flex flex-col">
+                      <span>{inv.invoiceNo}</span>
+                      {inv.pendingRemittance && (
+                        <span className="text-[10px] font-mono text-amber-700 bg-amber-50 px-1 rounded border border-amber-200 mt-0.5 inline-block w-fit">
+                          Remittance Advice Pending
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    {inv.milestoneTitle ? (
+                      <span className="font-medium text-zinc-900 bg-zinc-100/80 px-2 py-0.5 rounded text-[11px] border border-zinc-200/60 inline-block max-w-[200px] truncate">
+                        {inv.milestoneTitle}
+                      </span>
+                    ) : (
+                      <span className="text-zinc-400 text-[11px]">—</span>
+                    )}
+                  </td>
                   <td className="py-3 px-4">
                     <p className="font-semibold text-zinc-900">{inv.clientName}</p>
                     {inv.clientGstin && (
@@ -198,7 +224,20 @@ export default function InvoicesPage() {
                       View
                     </Button>
 
-                    {inv.status !== 'paid' && (
+                    {inv.pendingRemittance ? (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        className="bg-amber-600 hover:bg-amber-700 text-white border-amber-700 text-[11px]"
+                        onClick={() => {
+                          setSelectedInvoice(inv);
+                          setIsVerifyModalOpen(true);
+                        }}
+                        icon={<ShieldCheck className="w-3.5 h-3.5" />}
+                      >
+                        Verify UTR
+                      </Button>
+                    ) : inv.status !== 'paid' ? (
                       <Button
                         variant="primary"
                         size="sm"
@@ -214,7 +253,7 @@ export default function InvoicesPage() {
                       >
                         Pay
                       </Button>
-                    )}
+                    ) : null}
                   </td>
                 </tr>
               ))}
@@ -222,6 +261,73 @@ export default function InvoicesPage() {
           </table>
         </div>
       </Card>
+
+      {/* Verify Client Remittance Modal */}
+      {isVerifyModalOpen && selectedInvoice && selectedInvoice.pendingRemittance && (
+        <Modal
+          isOpen={isVerifyModalOpen}
+          onClose={() => setIsVerifyModalOpen(false)}
+          title={`Verify Client Remittance Advice`}
+          description={`Submitted by ${selectedInvoice.clientName} for Invoice ${selectedInvoice.invoiceNo}`}
+          footer={
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-rose-600 hover:bg-rose-50"
+                onClick={() => {
+                  verifyClientRemittance(selectedInvoice.id, false);
+                  setIsVerifyModalOpen(false);
+                  setSelectedInvoice(null);
+                }}
+                icon={<X className="w-3.5 h-3.5" />}
+              >
+                Reject Remittance
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  verifyClientRemittance(selectedInvoice.id, true);
+                  setIsVerifyModalOpen(false);
+                  setSelectedInvoice(null);
+                }}
+                icon={<Check className="w-3.5 h-3.5" />}
+              >
+                Approve & Credit ₹{formatCurrency(selectedInvoice.pendingRemittance.amount)}
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4 text-xs">
+            <div className="p-4 bg-amber-50/80 border border-amber-200 rounded-lg space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-zinc-600">Submitted Remittance Amount:</span>
+                <span className="font-mono font-bold text-zinc-950 text-base">
+                  ₹{formatCurrency(selectedInvoice.pendingRemittance.amount)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-zinc-600">
+                <span>Payment Mode:</span>
+                <span className="font-medium text-zinc-900">{selectedInvoice.pendingRemittance.paymentMethod}</span>
+              </div>
+              <div className="flex justify-between items-center text-zinc-600">
+                <span>Bank Reference / UTR:</span>
+                <span className="font-mono font-semibold text-zinc-900 bg-white px-2 py-0.5 rounded border border-amber-200">
+                  {selectedInvoice.pendingRemittance.referenceNo}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-zinc-500 text-[11px] pt-1 border-t border-amber-200/60">
+                <span>Submitted At:</span>
+                <span>{selectedInvoice.pendingRemittance.submittedAt}</span>
+              </div>
+            </div>
+            <p className="text-zinc-500 text-[11px]">
+              Confirming this remittance will officially credit the client's account, update invoice balance to ₹{formatCurrency(Math.max(0, selectedInvoice.balanceDue - selectedInvoice.pendingRemittance.amount))}, and log the transaction in the audit trail.
+            </p>
+          </div>
+        </Modal>
+      )}
 
       {/* Record Payment Modal */}
       {isPaymentModalOpen && selectedInvoice && (
@@ -272,7 +378,7 @@ export default function InvoicesPage() {
       )}
 
       {/* Invoice Detail / Print Modal */}
-      {selectedInvoice && !isPaymentModalOpen && (
+      {selectedInvoice && !isPaymentModalOpen && !isVerifyModalOpen && (
         <Modal
           isOpen={!!selectedInvoice}
           onClose={() => setSelectedInvoice(null)}
@@ -309,6 +415,11 @@ export default function InvoicesPage() {
                 <span className="text-[10px] font-mono uppercase text-zinc-400">Invoice Timeline</span>
                 <p className="font-mono text-zinc-900 mt-0.5">Date: {selectedInvoice.issueDate}</p>
                 <p className="font-mono text-rose-600">Due: {selectedInvoice.dueDate}</p>
+                {selectedInvoice.milestoneTitle && (
+                  <div className="mt-1">
+                    <Badge variant="neutral">{selectedInvoice.milestoneTitle}</Badge>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -361,6 +472,21 @@ export default function InvoicesPage() {
                 </div>
               </div>
             </div>
+
+            {/* Payment history */}
+            {selectedInvoice.payments && selectedInvoice.payments.length > 0 && (
+              <div className="pt-3 border-t border-zinc-100">
+                <h5 className="font-semibold text-zinc-900 mb-2">Remittance Transactions</h5>
+                <div className="space-y-1.5">
+                  {selectedInvoice.payments.map((p: any) => (
+                    <div key={p.id} className="p-2 bg-zinc-50 rounded border border-zinc-200/60 flex justify-between items-center text-[11px] font-mono">
+                      <span>{p.paymentDate} &bull; {p.paymentMethod} (Ref: {p.referenceNo})</span>
+                      <span className="font-semibold text-emerald-700">₹{formatCurrency(p.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </Modal>
       )}
@@ -391,6 +517,7 @@ export default function InvoicesPage() {
                 const c = clients.find(cl => cl.name === e.target.value);
                 setInvoiceData({
                   ...invoiceData,
+                  clientId: c?.id || '',
                   clientName: e.target.value,
                   clientEmail: c?.email || '',
                   clientGstin: c?.gstin || ''
@@ -405,7 +532,14 @@ export default function InvoicesPage() {
             <Select
               label="Production Event"
               value={invoiceData.eventTitle}
-              onChange={(e) => setInvoiceData({ ...invoiceData, eventTitle: e.target.value })}
+              onChange={(e) => {
+                const ev = events.find(event => event.title === e.target.value);
+                setInvoiceData({
+                  ...invoiceData,
+                  eventId: ev?.id || '',
+                  eventTitle: e.target.value
+                });
+              }}
             >
               {events.map(ev => (
                 <option key={ev.id} value={ev.title}>{ev.title}</option>

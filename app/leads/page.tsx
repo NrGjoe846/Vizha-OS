@@ -37,7 +37,7 @@ const STAGES: { key: LeadStage; label: string }[] = [
 ];
 
 export default function LeadsPage() {
-  const { leads, addLead, updateLeadStage, convertLead } = useERP();
+  const { leads, addLead, updateLeadStage, convertLead, convertLeadToQuotation } = useERP();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [conversionSuccess, setConversionSuccess] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -204,29 +204,50 @@ export default function LeadsPage() {
                         <span className="text-[10px] text-zinc-400">{lead.assignedTo}</span>
                       </div>
 
-                      {/* Stage Move Controls & Convert */}
-                      <div className="pt-2 border-t border-zinc-100 flex items-center justify-between gap-1.5">
-                        <select
-                          value={lead.stage}
-                          onChange={(e) => updateLeadStage(lead.id, e.target.value as LeadStage)}
-                          className="text-[10px] bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-zinc-700 focus:outline-none"
-                        >
-                          {STAGES.map(s => (
-                            <option key={s.key} value={s.key}>{s.label}</option>
-                          ))}
-                        </select>
-
-                        {lead.stage !== 'converted' && lead.stage !== 'lost' && (
-                          <Button
-                            variant="primary"
-                            size="sm"
-                            className="text-[10px] h-6 px-2"
-                            onClick={() => handleConvert(lead)}
+                        {/* Stage Move Controls & Actions */}
+                        <div className="pt-2 border-t border-zinc-100 flex items-center justify-between gap-1.5 flex-wrap">
+                          <select
+                            value={lead.stage}
+                            onChange={(e) => updateLeadStage(lead.id, e.target.value as LeadStage)}
+                            className="text-[10px] bg-zinc-50 border border-zinc-200 rounded px-1.5 py-1 text-zinc-700 focus:outline-none"
                           >
-                            Convert
-                          </Button>
-                        )}
-                      </div>
+                            {STAGES.map(s => (
+                              <option key={s.key} value={s.key}>{s.label}</option>
+                            ))}
+                          </select>
+
+                          <div className="flex items-center gap-1">
+                            {!lead.quotationId && lead.stage !== 'converted' && lead.stage !== 'lost' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-[10px] h-6 px-1.5"
+                                onClick={() => {
+                                  const q = convertLeadToQuotation(lead.id);
+                                  setConversionSuccess(`Drafted Quotation ${q.quotationNo} for ${lead.clientName}. Stage updated to Proposal Sent.`);
+                                  setTimeout(() => setConversionSuccess(null), 5000);
+                                }}
+                              >
+                                Draft Quote
+                              </Button>
+                            )}
+                            {lead.quotationId && (
+                              <span className="text-[10px] font-mono text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">
+                                Quoted
+                              </span>
+                            )}
+                            {lead.stage !== 'converted' && lead.stage !== 'lost' && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                className="text-[10px] h-6 px-2"
+                                onClick={() => handleConvert(lead)}
+                              >
+                                Convert
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                     </div>
                   ))}
 

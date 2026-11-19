@@ -13,13 +13,29 @@ import {
   Command,
   Layers,
   LogOut,
-  User
+  User,
+  Building2
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
+const BRANCHES = [
+  'All Branches',
+  'Mumbai HQ',
+  'Delhi NCR',
+  'Bangalore Hub'
+];
+
 export function Navbar() {
-  const { currentUser, switchUser, users, resetDemoData } = useERP();
+  const {
+    currentUser,
+    switchUser,
+    users,
+    resetDemoData,
+    selectedBranch,
+    setSelectedBranch
+  } = useERP();
+
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
@@ -42,10 +58,24 @@ export function Navbar() {
             </div>
           </Link>
 
+          {/* Branch Governance Selector */}
+          <div className="hidden sm:flex items-center gap-1.5 text-xs">
+            <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="bg-zinc-50 hover:bg-zinc-100 border border-zinc-200/80 rounded-md px-2 py-1 text-xs font-medium text-zinc-800 focus:outline-none cursor-pointer"
+            >
+              {BRANCHES.map((b) => (
+                <option key={b} value={b}>{b}</option>
+              ))}
+            </select>
+          </div>
+
           {/* Minimal Supabase Live Badge */}
           <div className="hidden lg:flex items-center gap-1.5 text-[11px] text-zinc-600 bg-zinc-50 px-2.5 py-1 rounded-md border border-zinc-200/60 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span>Supabase Cloud</span>
+            <span>Supabase Live</span>
           </div>
         </div>
 

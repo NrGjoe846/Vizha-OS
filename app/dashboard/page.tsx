@@ -16,7 +16,10 @@ import {
   Sparkles,
   MapPin,
   TrendingUp,
-  Circle
+  Circle,
+  Activity,
+  ShieldCheck,
+  Building2
 } from 'lucide-react';
 import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card';
@@ -25,11 +28,27 @@ import { Button } from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/format';
 
 export default function DashboardPage() {
-  const { currentUser, events, leads, invoices, expenses, guests, toggleEventSchedule, toggleEventTask } = useERP();
+  const {
+    currentUser,
+    events,
+    leads,
+    invoices,
+    expenses,
+    guests,
+    auditLogs,
+    selectedBranch,
+    toggleEventSchedule,
+    toggleEventTask
+  } = useERP();
 
-  // Calculations
-  const activeEvents = events.filter(e => e.status !== 'completed' && e.status !== 'cancelled');
+  // Branch filtering
+  const scopedEvents = selectedBranch === 'All Branches'
+    ? events
+    : events.filter(e => e.branchName === selectedBranch || (!e.branchName && selectedBranch === 'Mumbai HQ'));
+
+  const activeEvents = scopedEvents.filter(e => e.status !== 'completed' && e.status !== 'cancelled');
   const totalBudget = activeEvents.reduce((acc, e) => acc + e.budget, 0);
+
   const pipelineValue = leads
     .filter(l => l.stage !== 'lost')
     .reduce((acc, l) => acc + l.estimatedBudget, 0);
@@ -43,7 +62,7 @@ export default function DashboardPage() {
   const checkInRate = totalGuests > 0 ? Math.round((checkedInGuests / totalGuests) * 100) : 0;
 
   // Active event for run-of-show
-  const featuredEvent = events[0];
+  const featuredEvent = scopedEvents[0] || events[0];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -51,15 +70,16 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-zinc-200/80">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">
-              Overview &bull; {currentUser.branchName || 'Headquarters'}
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+              <Building2 className="w-3.5 h-3.5 text-zinc-400" />
+              Branch Scope: <span className="text-zinc-700 font-semibold">{selectedBranch}</span>
             </span>
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-zinc-950">
             Welcome, {currentUser.name}
           </h1>
           <p className="text-xs text-zinc-500 mt-0.5">
-            Signed in as <span className="font-medium text-zinc-800">{currentUser.roleTitle}</span>. Here is the operational pulse across active productions.
+            Signed in as <span className="font-medium text-zinc-800">{currentUser.roleTitle}</span>. Operational pulse across active productions.
           </p>
         </div>
 
@@ -87,7 +107,7 @@ export default function DashboardPage() {
         <StatCard
           label="Active Productions"
           value={activeEvents.length}
-          change="+2 this month"
+          change={selectedBranch !== 'All Branches' ? selectedBranch : '+2 this month'}
           changeType="positive"
           icon={<Calendar className="w-4 h-4" />}
           description={`₹${(totalBudget / 100000).toFixed(1)}L combined budget`}
@@ -235,6 +255,47 @@ export default function DashboardPage() {
                         {evt.guestCount} guests
                       </p>
                     </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Live System Activity & Audit Feed */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-zinc-600" />
+                    <span>Real-time Operations Audit Feed</span>
+                  </CardTitle>
+                  <CardDescription>Immutable log of commercial transactions and operational status changes</CardDescription>
+                </div>
+                <Badge variant="neutral" className="font-mono text-[10px]">
+                  {auditLogs.length} Events Logged
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-zinc-100 max-h-72 overflow-y-auto">
+                {auditLogs.slice(0, 8).map((log) => (
+                  <div key={log.id} className="p-3 hover:bg-zinc-50/60 transition-colors flex items-start justify-between gap-3 text-xs">
+                    <div className="space-y-0.5 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-zinc-900">{log.action}</span>
+                        <Badge variant="neutral" className="text-[10px] uppercase font-mono px-1 py-0">
+                          {log.entityType.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-zinc-600 line-clamp-1">{log.details}</p>
+                      <p className="text-[10px] text-zinc-400">
+                        By <span className="font-medium text-zinc-700">{log.actorName}</span> ({log.actorRole})
+                      </p>
+                    </div>
+                    <span className="text-[10px] font-mono text-zinc-400 shrink-0">
+                      {log.timestamp}
+                    </span>
                   </div>
                 ))}
               </div>

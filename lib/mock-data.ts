@@ -11,7 +11,10 @@ import {
   InventoryItem,
   EventGuest,
   Ticket,
-  TicketType
+  TicketType,
+  EventEquipmentRequisition,
+  VendorWorkOrder,
+  AuditLog
 } from './types';
 
 export const DEMO_USERS: UserProfile[] = [
@@ -948,5 +951,154 @@ export const INITIAL_TICKETS: Ticket[] = [
     pricePaid: 4999,
     qrToken: 'QR-SUNWAVE-441203',
     isScanned: false
+  }
+];
+
+export const INITIAL_REQUISITIONS: EventEquipmentRequisition[] = [
+  {
+    id: 'req-001',
+    eventId: 'evt-2026-001',
+    eventTitle: 'Global Tech Conclave 2026',
+    itemId: 'inv-001',
+    itemName: 'JBL VTX A12 Line Array Speaker',
+    itemSku: 'AV-SPK-001',
+    quantity: 4,
+    rentalPrice: 15000,
+    days: 2,
+    totalCost: 120000,
+    status: 'reserved',
+    requisitionDate: '2026-11-15'
+  },
+  {
+    id: 'req-002',
+    eventId: 'evt-2026-001',
+    eventTitle: 'Global Tech Conclave 2026',
+    itemId: 'inv-003',
+    itemName: 'Absen P2.9 Indoor LED Video Wall (500x500mm)',
+    itemSku: 'AV-LED-003',
+    quantity: 2,
+    rentalPrice: 25000,
+    days: 2,
+    totalCost: 100000,
+    status: 'reserved',
+    requisitionDate: '2026-11-15'
+  },
+  {
+    id: 'req-003',
+    eventId: 'evt-2026-002',
+    eventTitle: 'The Grand Oberoi-Singhania Wedding',
+    itemId: 'inv-002',
+    itemName: 'Robe BMFL Blade Moving Head Stage Light',
+    itemSku: 'LGT-MHD-002',
+    quantity: 12,
+    rentalPrice: 3500,
+    days: 3,
+    totalCost: 126000,
+    status: 'reserved',
+    requisitionDate: '2026-11-14'
+  }
+];
+
+export const INITIAL_WORK_ORDERS: VendorWorkOrder[] = [
+  {
+    id: 'wo-001',
+    workOrderNo: 'WO-2026-001',
+    eventId: 'evt-2026-001',
+    eventTitle: 'Global Tech Conclave 2026',
+    vendorId: 'v-1',
+    vendorName: 'SoundCraft Pro AV & Lighting',
+    vendorCategory: 'Audio & Visual',
+    scopeOfWork: 'Main auditorium Dolby line array setup, stage monitoring, keynote wireless lavalier mics & technical sound engineer coverage for 2 full days.',
+    contractAmount: 450000,
+    advancePaid: 200000,
+    status: 'accepted',
+    cueAssignments: 'Cue 01: Keynote Walk-in; Cue 04: Product Reveal SFX & Spotlight',
+    issuedDate: '2026-11-10',
+    dueDate: '2026-12-05'
+  },
+  {
+    id: 'wo-002',
+    workOrderNo: 'WO-2026-002',
+    eventId: 'evt-2026-001',
+    eventTitle: 'Global Tech Conclave 2026',
+    vendorId: 'v-2',
+    vendorName: 'Royal Cuisines Catering Co.',
+    vendorCategory: 'Catering & Hospitality',
+    scopeOfWork: 'Executive lunch buffet, all-day artisanal coffee bar, and VIP speaker gala dinner for 1,200 attendees.',
+    contractAmount: 1200000,
+    advancePaid: 400000,
+    status: 'issued',
+    cueAssignments: 'Session Break 1: 11:00 AM; Lunch Service: 1:30 PM',
+    issuedDate: '2026-11-12',
+    dueDate: '2026-12-05'
+  },
+  {
+    id: 'wo-003',
+    workOrderNo: 'WO-2026-003',
+    eventId: 'evt-2026-002',
+    eventTitle: 'The Grand Oberoi-Singhania Wedding',
+    vendorId: 'v-3',
+    vendorName: 'Luxe Flora & Decor Studios',
+    vendorCategory: 'Decor & Production',
+    scopeOfWork: 'Mandap floral canopy, grand entrance arches, crystal chandeliers, table centerpieces for Sangeet & Reception.',
+    contractAmount: 850000,
+    advancePaid: 350000,
+    status: 'invoiced',
+    cueAssignments: 'Bride Grand Entry: 7:45 PM; Ring Exchange: 8:15 PM',
+    issuedDate: '2026-11-08',
+    dueDate: '2026-12-18'
+  }
+];
+
+export const INITIAL_AUDIT_LOGS: AuditLog[] = [
+  {
+    id: 'log-001',
+    timestamp: '2026-11-18 16:30',
+    actorName: 'Vikramaditya Singhania',
+    actorRole: 'Super Administrator',
+    action: 'Approved Quotation Q-2026-001',
+    entityType: 'quotation',
+    entityId: 'q-1',
+    details: 'Quotation Q-2026-001 for ₹28,91,000 approved and synchronized with Global Tech Conclave budget.'
+  },
+  {
+    id: 'log-002',
+    timestamp: '2026-11-18 14:15',
+    actorName: 'Rajesh Verma',
+    actorRole: 'Head of Client Acquisition',
+    action: 'Converted Lead to Event',
+    entityType: 'lead',
+    entityId: 'lead-1',
+    details: 'Lead "Titan Tech Annual Global Summit 2026" marked qualified and drafted quotation Q-2026-001.'
+  },
+  {
+    id: 'log-003',
+    timestamp: '2026-11-17 11:20',
+    actorName: 'Anita Desai',
+    actorRole: 'Chief Financial Controller',
+    action: 'Verified Remittance Advice',
+    entityType: 'invoice',
+    entityId: 'inv-1',
+    details: 'Verified wire transfer UTR #HDFC0099812 for ₹15,00,000 on Invoice INV-2026-001.'
+  },
+  {
+    id: 'log-004',
+    timestamp: '2026-11-16 17:45',
+    actorName: 'Priya Sharma',
+    actorRole: 'Senior Event Producer',
+    action: 'Issued Vendor Work Order',
+    entityType: 'vendor_wo',
+    entityId: 'wo-001',
+    details: 'Dispatched Work Order WO-2026-001 to SoundCraft Pro AV & Lighting with advance payment ₹2,00,000.'
+  },
+  {
+    id: 'log-005',
+    timestamp: '2026-11-15 09:30',
+    actorName: 'Vikram Rathore',
+    actorRole: 'Site Operations Lead',
+    action: 'Requisitioned Fleet Inventory',
+    entityType: 'inventory',
+    entityId: 'inv-001',
+    details: 'Reserved 4x JBL VTX A12 Line Array Speakers for Global Tech Conclave 2026.'
   }
 ];

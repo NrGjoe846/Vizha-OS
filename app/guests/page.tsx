@@ -9,7 +9,9 @@ import {
   Clock,
   Search,
   Check,
-  Utensils
+  Utensils,
+  Filter,
+  Layers
 } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardContent } from '@/components/ui/Card';
@@ -23,6 +25,7 @@ import { StatCard } from '@/components/ui/StatCard';
 export default function GuestsPage() {
   const { guests, addGuest, toggleGuestCheckIn, events } = useERP();
   const [filterGroup, setFilterGroup] = useState<string>('all');
+  const [selectedEventId, setSelectedEventId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -38,18 +41,22 @@ export default function GuestsPage() {
     dietaryPref: 'Jain Pure Vegetarian'
   });
 
-  const checkedInCount = guests.filter(g => g.isCheckedIn).length;
-  const checkInRate = guests.length > 0 ? Math.round((checkedInCount / guests.length) * 100) : 0;
+  const eventFilteredGuests = guests.filter(g =>
+    selectedEventId === 'all' || g.eventId === selectedEventId || g.eventTitle === events.find(e => e.id === selectedEventId)?.title
+  );
+
+  const checkedInCount = eventFilteredGuests.filter(g => g.isCheckedIn).length;
+  const checkInRate = eventFilteredGuests.length > 0 ? Math.round((checkedInCount / eventFilteredGuests.length) * 100) : 0;
 
   const categories = [
-    { id: 'all', label: 'All Guests', count: guests.length },
+    { id: 'all', label: 'All Guests', count: eventFilteredGuests.length },
     { id: 'VIP', label: 'VIP' },
     { id: 'Family', label: 'Family' },
     { id: 'Corporate', label: 'Corporate' },
     { id: 'Media', label: 'Media' },
   ];
 
-  const filteredGuests = guests.filter((g) => {
+  const filteredGuests = eventFilteredGuests.filter((g) => {
     const matchesGroup = filterGroup === 'all' || g.group === filterGroup;
     const matchesSearch =
       g.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -57,6 +64,12 @@ export default function GuestsPage() {
       g.tableNo.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesGroup && matchesSearch;
   });
+
+  // Calculate table distribution
+  const tableCounts = eventFilteredGuests.reduce((acc, g) => {
+    acc[g.tableNo] = (acc[g.tableNo] || 0) + 1 + g.plusOnes;
+    return acc;
+  }, {} as Record<string, number>);
 
   const handleCreateGuest = (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,14 +96,25 @@ export default function GuestsPage() {
         description="Gate admission pass codes, VIP delegation seating tables, dietary requirements, and check-in tracking."
         badge={
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
-            {guests.length} Confirmed RSVPs
+            {eventFilteredGuests.length} Confirmed RSVPs
           </span>
         }
         actions={
           <div className="flex items-center gap-2">
+            <div className="w-56">
+              <Select
+                value={selectedEventId}
+                onChange={(e) => setSelectedEventId(e.target.value)}
+              >
+                <option value="all">All Events Scope</option>
+                {events.map(ev => (
+                  <option key={ev.id} value={ev.id}>{ev.title}</option>
+                ))}
+              </Select>
+            </div>
             <div className="w-52">
               <Input
-                placeholder="Search guests by name or pass..."
+                placeholder="Search guests or pass..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 icon={<Search className="w-3.5 h-3.5" />}
@@ -102,27 +126,33 @@ export default function GuestsPage() {
               onClick={() => setIsModalOpen(true)}
               icon={<Plus className="w-3.5 h-3.5" />}
             >
-              Add Guest RSVP
+              Add RSVP
             </Button>
           </div>
         }
       />
 
       {/* Metrics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           label="Confirmed Guest RSVPs"
-          value={`${guests.length} Attendees`}
+          value={`${eventFilteredGuests.length} Attendees`}
           icon={<Users className="w-4 h-4" />}
           description="Seating assigned across banquet tables"
         />
         <StatCard
           label="Gate Check-in Progress"
           value={`${checkInRate}%`}
-          change={`${checkedInCount} of ${guests.length} admitted`}
+          change={`${checkedInCount} of ${eventFilteredGuests.length} admitted`}
           changeType="positive"
           icon={<CheckCircle2 className="w-4 h-4" />}
           description="Live barcode scanning at venue turnstiles"
+        />
+        <StatCard
+          label="Seating Tables Active"
+          value={`${Object.keys(tableCounts).length} Tables`}
+          icon={<Layers className="w-4 h-4" />}
+          description="Assigned banquet floorplan zones"
         />
       </div>
 
@@ -141,6 +171,7 @@ export default function GuestsPage() {
               <tr>
                 <th className="py-3 px-4">Pass Code</th>
                 <th className="py-3 px-4">Guest Name</th>
+                <th className="py-3 px-4">Event</th>
                 <th className="py-3 px-4">Delegation Group</th>
                 <th className="py-3 px-4">Table #</th>
                 <th className="py-3 px-4">+Ones</th>
@@ -157,6 +188,7 @@ export default function GuestsPage() {
                     <p className="font-semibold text-zinc-950">{g.name}</p>
                     <p className="text-[11px] text-zinc-400 font-mono">{g.phone || g.email}</p>
                   </td>
+                  <td className="py-3 px-4 text-zinc-600 truncate max-w-xs">{g.eventTitle}</td>
                   <td className="py-3 px-4">
                     <Badge variant={g.group === 'VIP' ? 'purple' : 'neutral'} dot>
                       {g.group}
@@ -198,23 +230,40 @@ export default function GuestsPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Add Guest RSVP"
-        description="Register a guest profile with seating table and gate pass code."
+        description="Register a confirmed attendee and assign table seating."
         footer={
           <>
             <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
               Cancel
             </Button>
             <Button variant="primary" size="sm" onClick={handleCreateGuest}>
-              Confirm Guest
+              Save RSVP
             </Button>
           </>
         }
       >
         <form onSubmit={handleCreateGuest} className="space-y-3.5">
+          <Select
+            label="Assigned Production Event"
+            value={formData.eventId}
+            onChange={(e) => {
+              const ev = events.find(event => event.id === e.target.value);
+              setFormData({
+                ...formData,
+                eventId: e.target.value,
+                eventTitle: ev?.title || formData.eventTitle
+              });
+            }}
+          >
+            {events.map(ev => (
+              <option key={ev.id} value={ev.id}>{ev.title}</option>
+            ))}
+          </Select>
+
           <Input
             label="Guest Full Name"
             required
-            placeholder="e.g. Vikramaditya Birla"
+            placeholder="e.g. Vikramaditya Singhania"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
           />
@@ -223,21 +272,19 @@ export default function GuestsPage() {
             <Input
               label="Email Address"
               type="email"
-              placeholder="guest@birla.com"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
             <Input
               label="Phone Number"
-              placeholder="+91 98201 11223"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
             />
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             <Select
-              label="Delegation Group"
+              label="Delegation Category"
               value={formData.group}
               onChange={(e) => setFormData({ ...formData, group: e.target.value as any })}
             >
@@ -249,25 +296,26 @@ export default function GuestsPage() {
             </Select>
 
             <Input
-              label="Table Number"
-              placeholder="e.g. T-12"
+              label="Table Designation"
               value={formData.tableNo}
               onChange={(e) => setFormData({ ...formData, tableNo: e.target.value })}
             />
+          </div>
 
+          <div className="grid grid-cols-2 gap-3">
             <Input
-              label="Plus Ones"
+              label="Additional Guests (+Ones)"
               type="number"
+              min={0}
               value={formData.plusOnes}
               onChange={(e) => setFormData({ ...formData, plusOnes: Number(e.target.value) })}
             />
+            <Input
+              label="Dietary Requirements"
+              value={formData.dietaryPref}
+              onChange={(e) => setFormData({ ...formData, dietaryPref: e.target.value })}
+            />
           </div>
-
-          <Input
-            label="Dietary Requirement"
-            value={formData.dietaryPref}
-            onChange={(e) => setFormData({ ...formData, dietaryPref: e.target.value })}
-          />
         </form>
       </Modal>
     </div>

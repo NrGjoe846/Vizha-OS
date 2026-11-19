@@ -55,6 +55,7 @@ export interface Lead {
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignedTo: string;
   notes?: string;
+  quotationId?: string;
   createdAt: string;
 }
 
@@ -108,6 +109,49 @@ export interface EventTaskItem {
   isCompleted: boolean;
 }
 
+export interface EventEquipmentRequisition {
+  id: string;
+  eventId: string;
+  eventTitle: string;
+  itemId: string;
+  itemName: string;
+  itemSku: string;
+  quantity: number;
+  rentalPrice: number;
+  days: number;
+  totalCost: number;
+  status: 'reserved' | 'dispatched' | 'returned';
+  requisitionDate: string;
+}
+
+export interface VendorWorkOrder {
+  id: string;
+  workOrderNo: string;
+  eventId: string;
+  eventTitle: string;
+  vendorId: string;
+  vendorName: string;
+  vendorCategory: string;
+  scopeOfWork: string;
+  contractAmount: number;
+  advancePaid: number;
+  status: 'draft' | 'issued' | 'accepted' | 'declined' | 'completed' | 'invoiced';
+  cueAssignments?: string;
+  issuedDate: string;
+  dueDate: string;
+}
+
+export interface AuditLog {
+  id: string;
+  timestamp: string;
+  actorName: string;
+  actorRole: string;
+  action: string;
+  entityType: 'lead' | 'event' | 'quotation' | 'invoice' | 'expense' | 'inventory' | 'ticket' | 'guest' | 'vendor_wo';
+  entityId: string;
+  details: string;
+}
+
 export type EventStatus =
   | 'draft'
   | 'planning'
@@ -134,8 +178,11 @@ export interface EventModel {
   budget: number;
   actualSpend: number;
   coverImage: string;
+  branchName?: string;
   schedules: EventScheduleItem[];
   tasks: EventTaskItem[];
+  equipmentRequisitions?: EventEquipmentRequisition[];
+  vendorWorkOrders?: VendorWorkOrder[];
 }
 
 export interface QuotationItem {
@@ -149,9 +196,12 @@ export interface QuotationItem {
 export interface Quotation {
   id: string;
   quotationNo: string;
+  clientId?: string;
   clientName: string;
   clientEmail: string;
+  eventId?: string;
   eventTitle: string;
+  leadId?: string;
   issueDate: string;
   validUntil: string;
   subtotal: number;
@@ -160,6 +210,7 @@ export interface Quotation {
   discount: number;
   totalAmount: number;
   status: 'draft' | 'sent' | 'approved' | 'rejected';
+  milestonesGenerated?: boolean;
   items: QuotationItem[];
 }
 
@@ -177,14 +228,19 @@ export interface PaymentRecord {
   paymentDate: string;
   paymentMethod: string;
   referenceNo: string;
+  isClientSubmitted?: boolean;
 }
 
 export interface Invoice {
   id: string;
   invoiceNo: string;
+  quotationId?: string;
+  milestoneTitle?: string;
+  clientId?: string;
   clientName: string;
   clientEmail: string;
   clientGstin?: string;
+  eventId?: string;
   eventTitle: string;
   issueDate: string;
   dueDate: string;
@@ -195,6 +251,12 @@ export interface Invoice {
   paidAmount: number;
   balanceDue: number;
   status: 'unpaid' | 'partial' | 'paid' | 'overdue';
+  pendingRemittance?: {
+    amount: number;
+    paymentMethod: string;
+    referenceNo: string;
+    submittedAt: string;
+  };
   items: InvoiceItem[];
   payments: PaymentRecord[];
 }
@@ -207,6 +269,7 @@ export interface EventExpense {
   description: string;
   amount: number;
   vendorName: string;
+  vendorWorkOrderId?: string;
   status: 'pending' | 'approved' | 'rejected';
   expenseDate: string;
 }
@@ -252,6 +315,7 @@ export interface Ticket {
   id: string;
   ticketNumber: string;
   ticketTypeName: string;
+  eventId?: string;
   eventTitle: string;
   buyerName: string;
   buyerEmail: string;

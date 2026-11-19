@@ -110,7 +110,7 @@ export function NewLeadModal({
       onClose={onClose}
       title="Register Sales Lead / Inbound Enquiry"
       description="Capture complete customer requirements, marketing attribution, and event expectations."
-      maxWidth="2xl"
+      maxWidth="3xl"
       footer={
         <>
           <Button variant="outline" size="sm" onClick={onClose}>

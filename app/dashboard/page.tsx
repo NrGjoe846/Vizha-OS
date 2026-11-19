@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const featuredEvent = scopedEvents[0] || events[0];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto">
       {/* Top Header & Greeting */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-zinc-200/80">
         <div>

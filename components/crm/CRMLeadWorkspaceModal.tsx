@@ -309,7 +309,7 @@ export function CRMLeadWorkspaceModal({
       onClose={onClose}
       title={`${lead.leadNumber || 'OPPORTUNITY'} — ${lead.title}`}
       description={`${lead.eventType} • ${lead.clientName} • Assigned to ${lead.assignedTo}`}
-      maxWidth="3xl"
+      maxWidth="5xl"
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">

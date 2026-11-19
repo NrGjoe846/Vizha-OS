@@ -14,7 +14,9 @@ import {
   Layers,
   LogOut,
   User,
-  Building2
+  Building2,
+  Menu,
+  X
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -33,17 +35,27 @@ export function Navbar() {
     users,
     resetDemoData,
     selectedBranch,
-    setSelectedBranch
+    setSelectedBranch,
+    isMobileMenuOpen,
+    setIsMobileMenuOpen
   } = useERP();
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-zinc-200/80 no-print transition-colors">
+    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-zinc-200/80 no-print transition-colors">
       <div className="px-4 sm:px-6 flex items-center justify-between h-14">
-        {/* Left: Brand Identity */}
-        <div className="flex items-center gap-4">
+        {/* Left: Mobile Menu Toggle & Brand Identity */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-1.5 rounded-lg text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100 transition-colors"
+            aria-label="Toggle navigation menu"
+          >
+            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+
           <Link href="/dashboard" className="flex items-center gap-2.5 group">
             <div className="w-8 h-8 rounded-lg bg-zinc-950 flex items-center justify-center text-white shadow-xs group-hover:bg-zinc-800 transition-colors">
               <Layers className="w-4 h-4" />

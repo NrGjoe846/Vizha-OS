@@ -144,6 +144,10 @@ interface ERPContextType {
   auditLogs: AuditLog[];
   logAuditAction: (action: string, entityType: AuditLog['entityType'], entityId: string, details: string) => void;
 
+  // Mobile Navigation
+  isMobileMenuOpen: boolean;
+  setIsMobileMenuOpen: (open: boolean) => void;
+
   // Reset to default
   resetDemoData: () => void;
 }
@@ -155,6 +159,7 @@ const STORAGE_KEY = 'eventflow_erp_v3_state';
 export function ERPProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserProfile>(DEMO_USERS[0]);
   const [selectedBranch, setSelectedBranch] = useState<string>('All Branches');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState<boolean>(false);
   const [clients, setClients] = useState<Client[]>(INITIAL_CLIENTS);
   const [leads, setLeads] = useState<Lead[]>(INITIAL_LEADS);
   const [venues, setVenues] = useState<Venue[]>(INITIAL_VENUES);
@@ -1338,6 +1343,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         issueTicket,
         auditLogs,
         logAuditAction,
+        isMobileMenuOpen,
+        setIsMobileMenuOpen,
         resetDemoData
       }}
     >

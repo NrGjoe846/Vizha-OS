@@ -16,12 +16,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning className="min-h-screen bg-[#fafafa] text-zinc-900 font-sans antialiased flex flex-col selection:bg-zinc-900 selection:text-white">
+      <body suppressHydrationWarning className="h-screen bg-[#fafafa] text-zinc-900 font-sans antialiased flex flex-col overflow-hidden selection:bg-zinc-900 selection:text-white">
         <ERPProvider>
           <Navbar />
-          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+          <div className="flex-1 flex overflow-hidden">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <main className="flex-1 overflow-y-auto p-3 sm:p-5 lg:p-6 custom-scrollbar">
               {children}
             </main>
           </div>

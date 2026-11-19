@@ -10,7 +10,7 @@ export interface ModalProps {
   description?: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
-  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl';
 }
 
 export function Modal({
@@ -41,10 +41,13 @@ export function Modal({
     xl: 'max-w-xl',
     '2xl': 'max-w-2xl',
     '3xl': 'max-w-3xl',
+    '4xl': 'max-w-4xl',
+    '5xl': 'max-w-5xl',
+    '6xl': 'max-w-6xl',
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 md:p-6 overflow-hidden">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-zinc-950/40 backdrop-blur-xs transition-opacity animate-in fade-in duration-150"
@@ -55,30 +58,31 @@ export function Modal({
       <div
         role="dialog"
         aria-modal="true"
-        className={`relative w-full ${maxWidths[maxWidth]} bg-white rounded-xl border border-zinc-200 shadow-xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150`}
+        className={`relative w-full ${maxWidths[maxWidth]} bg-white rounded-2xl border border-zinc-200/90 shadow-2xl overflow-hidden z-10 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[92vh] sm:max-h-[90vh]`}
       >
         {/* Header */}
-        <div className="flex items-start justify-between p-5 pb-4 border-b border-zinc-100">
+        <div className="flex items-start justify-between p-5 pb-4 border-b border-zinc-100 shrink-0 bg-white">
           <div>
-            <h2 className="text-sm font-semibold text-zinc-900 tracking-tight">{title}</h2>
+            <h2 className="text-sm sm:text-base font-semibold text-zinc-900 tracking-tight">{title}</h2>
             {description && (
-              <p className="text-xs text-zinc-500 mt-0.5">{description}</p>
+              <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">{description}</p>
             )}
           </div>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors"
+            aria-label="Close dialog"
+            className="p-1.5 rounded-lg text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 transition-colors ml-3 shrink-0"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="p-5 max-h-[75vh] overflow-y-auto">{children}</div>
+        <div className="p-5 sm:p-6 overflow-y-auto flex-1">{children}</div>
 
         {/* Footer */}
         {footer && (
-          <div className="p-4 bg-zinc-50 border-t border-zinc-100 flex items-center justify-end gap-2">
+          <div className="p-4 sm:px-6 bg-zinc-50/80 border-t border-zinc-100 flex items-center justify-end gap-2 shrink-0">
             {footer}
           </div>
         )}

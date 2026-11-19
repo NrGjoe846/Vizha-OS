@@ -17,6 +17,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { formatCurrency, formatNumber } from '@/lib/format';
 
 export default function VenuesPage() {
   const { venues, addVenue } = useERP();
@@ -135,11 +136,11 @@ export default function VenuesPage() {
               <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
                 <div>
                   <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Max Capacity</span>
-                  <p className="font-mono font-medium text-zinc-800">{v.capacity.toLocaleString()} Guests</p>
+                  <p className="font-mono font-medium text-zinc-800">{formatNumber(v.capacity)} Guests</p>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Rental Rate</span>
-                  <p className="font-mono font-semibold text-zinc-950">₹{(v.rentalRate).toLocaleString()} / day</p>
+                  <p className="font-mono font-semibold text-zinc-950">₹{formatCurrency(v.rentalRate)} / day</p>
                 </div>
               </div>
             </CardContent>

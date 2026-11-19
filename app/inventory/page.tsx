@@ -19,6 +19,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { StatCard } from '@/components/ui/StatCard';
 import { Tabs } from '@/components/ui/Tabs';
+import { formatCurrency, formatNumber } from '@/lib/format';
 
 export default function InventoryPage() {
   const { inventory, addInventoryItem } = useERP();
@@ -100,13 +101,13 @@ export default function InventoryPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
           label="Total Fleet Units"
-          value={`${totalAssets.toLocaleString()} Units`}
+          value={`${formatNumber(totalAssets)} Units`}
           icon={<Package className="w-4 h-4" />}
           description="Stored across Mumbai & Delhi staging warehouses"
         />
         <StatCard
           label="Active Dispatches"
-          value={`${allocatedAssets.toLocaleString()} Units`}
+          value={`${formatNumber(allocatedAssets)} Units`}
           change={`${Math.round((allocatedAssets / (totalAssets || 1)) * 100)}% utilization`}
           changeType="positive"
           icon={<Boxes className="w-4 h-4" />}
@@ -168,7 +169,7 @@ export default function InventoryPage() {
                       </div>
                     </td>
                     <td className="py-3 px-4 font-mono font-medium text-zinc-900">
-                      ₹{item.rentalPrice.toLocaleString()}
+                      ₹{formatCurrency(item.rentalPrice)}
                     </td>
                     <td className="py-3 px-4">
                       <Badge

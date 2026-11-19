@@ -26,6 +26,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Tabs } from '@/components/ui/Tabs';
 import { StatCard } from '@/components/ui/StatCard';
+import { formatCurrency } from '@/lib/format';
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -180,9 +181,9 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         />
         <StatCard
           label="Budget Allocated"
-          value={`₹${(event.budget).toLocaleString()}`}
+          value={`₹${formatCurrency(event.budget)}`}
           icon={<DollarSign className="w-4 h-4" />}
-          description={`Spent: ₹${(event.actualSpend).toLocaleString()}`}
+          description={`Spent: ₹${formatCurrency(event.actualSpend)}`}
         />
         <StatCard
           label="Client & Guests"
@@ -368,13 +369,13 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                 <div>
                   <p className="text-zinc-400 text-[11px]">Total Contract Budget</p>
                   <p className="font-mono font-semibold text-zinc-900 text-base mt-1">
-                    ₹{(event.budget).toLocaleString()}
+                    ₹{formatCurrency(event.budget)}
                   </p>
                 </div>
                 <div>
                   <p className="text-zinc-400 text-[11px]">Actual Spend To Date</p>
                   <p className="font-mono font-semibold text-zinc-900 text-base mt-1">
-                    ₹{(event.actualSpend).toLocaleString()}
+                    ₹{formatCurrency(event.actualSpend)}
                   </p>
                 </div>
               </div>

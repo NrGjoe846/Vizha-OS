@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { formatCurrency } from '@/lib/format';
 
 export default function ClientsPage() {
   const { clients, addClient } = useERP();
@@ -140,7 +141,7 @@ export default function ClientsPage() {
               </div>
               <div className="text-right">
                 <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Lifetime Spent</span>
-                <p className="font-mono font-semibold text-zinc-950">₹{(c.totalSpent).toLocaleString()}</p>
+                <p className="font-mono font-semibold text-zinc-950">₹{formatCurrency(c.totalSpent)}</p>
               </div>
             </div>
           </Card>

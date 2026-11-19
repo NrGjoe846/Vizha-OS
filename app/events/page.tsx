@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Tabs } from '@/components/ui/Tabs';
+import { formatCurrency } from '@/lib/format';
 
 export default function EventsPage() {
   const { events, addEvent, clients, venues } = useERP();
@@ -181,7 +182,7 @@ export default function EventsPage() {
                   <div className="flex items-center justify-between text-xs">
                     <span className="text-zinc-500 text-[11px]">Budget Utilized</span>
                     <span className="font-mono font-medium text-zinc-900 text-[11px]">
-                      ₹{(evt.actualSpend).toLocaleString()} / ₹{(evt.budget).toLocaleString()}
+                      ₹{formatCurrency(evt.actualSpend)} / ₹{formatCurrency(evt.budget)}
                     </span>
                   </div>
                   <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">

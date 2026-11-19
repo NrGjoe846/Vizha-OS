@@ -22,6 +22,7 @@ import { StatCard } from '@/components/ui/StatCard';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { formatCurrency } from '@/lib/format';
 
 export default function DashboardPage() {
   const { currentUser, events, leads, invoices, expenses, guests, toggleEventSchedule, toggleEventTask } = useERP();
@@ -228,7 +229,7 @@ export default function DashboardPage() {
 
                     <div className="text-right shrink-0">
                       <p className="text-xs font-mono font-medium text-zinc-900">
-                        ₹{(evt.budget).toLocaleString()}
+                        ₹{formatCurrency(evt.budget)}
                       </p>
                       <p className="text-[10px] text-zinc-400 mt-0.5">
                         {evt.guestCount} guests
@@ -308,7 +309,7 @@ export default function DashboardPage() {
                     <div className="flex items-center justify-between text-[11px] text-zinc-500 mt-1">
                       <span>{lead.clientName}</span>
                       <span className="font-mono font-medium text-zinc-800">
-                        ₹{(lead.estimatedBudget).toLocaleString()}
+                        ₹{formatCurrency(lead.estimatedBudget)}
                       </span>
                     </div>
                   </div>

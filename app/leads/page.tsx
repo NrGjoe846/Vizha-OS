@@ -24,6 +24,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { formatCurrency } from '@/lib/format';
 
 const STAGES: { key: LeadStage; label: string }[] = [
   { key: 'new', label: 'New Inquiries' },
@@ -198,7 +199,7 @@ export default function LeadsPage() {
 
                       <div className="pt-2 border-t border-zinc-100 flex items-center justify-between">
                         <span className="font-mono text-xs font-semibold text-zinc-950">
-                          ₹{(lead.estimatedBudget).toLocaleString()}
+                          ₹{formatCurrency(lead.estimatedBudget)}
                         </span>
                         <span className="text-[10px] text-zinc-400">{lead.assignedTo}</span>
                       </div>

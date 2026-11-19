@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { StatCard } from '@/components/ui/StatCard';
+import { formatCurrency } from '@/lib/format';
 
 export default function InvoicesPage() {
   const { invoices, addInvoice, recordPayment, clients, events } = useERP();
@@ -121,20 +122,20 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
           label="Total Billed (with 18% GST)"
-          value={`₹${(totalBilled).toLocaleString()}`}
+          value={`₹${formatCurrency(totalBilled)}`}
           icon={<Receipt className="w-4 h-4" />}
           description="Cumulative invoice billings"
         />
         <StatCard
           label="Collections Received"
-          value={`₹${(totalReceived).toLocaleString()}`}
+          value={`₹${formatCurrency(totalReceived)}`}
           changeType="positive"
           icon={<CreditCard className="w-4 h-4" />}
           description="Bank transfers & verified receipts"
         />
         <StatCard
           label="Outstanding Balance Due"
-          value={`₹${(totalDue).toLocaleString()}`}
+          value={`₹${formatCurrency(totalDue)}`}
           changeType={totalDue > 0 ? 'negative' : 'positive'}
           icon={<AlertCircle className="w-4 h-4" />}
           description="Pending client remittances"
@@ -170,9 +171,9 @@ export default function InvoicesPage() {
                   </td>
                   <td className="py-3 px-4 text-zinc-600 truncate max-w-xs">{inv.eventTitle}</td>
                   <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">{inv.dueDate}</td>
-                  <td className="py-3 px-4 font-mono font-medium text-zinc-950">₹{inv.totalAmount.toLocaleString()}</td>
-                  <td className="py-3 px-4 font-mono text-emerald-600">₹{inv.paidAmount.toLocaleString()}</td>
-                  <td className="py-3 px-4 font-mono font-semibold text-zinc-900">₹{inv.balanceDue.toLocaleString()}</td>
+                  <td className="py-3 px-4 font-mono font-medium text-zinc-950">₹{formatCurrency(inv.totalAmount)}</td>
+                  <td className="py-3 px-4 font-mono text-emerald-600">₹{formatCurrency(inv.paidAmount)}</td>
+                  <td className="py-3 px-4 font-mono font-semibold text-zinc-900">₹{formatCurrency(inv.balanceDue)}</td>
                   <td className="py-3 px-4">
                     <Badge
                       variant={
@@ -228,7 +229,7 @@ export default function InvoicesPage() {
           isOpen={isPaymentModalOpen}
           onClose={() => setIsPaymentModalOpen(false)}
           title={`Record Payment for ${selectedInvoice.invoiceNo}`}
-          description={`Outstanding balance: ₹${selectedInvoice.balanceDue.toLocaleString()}`}
+          description={`Outstanding balance: ₹${formatCurrency(selectedInvoice.balanceDue)}`}
           footer={
             <>
               <Button variant="outline" size="sm" onClick={() => setIsPaymentModalOpen(false)}>
@@ -327,8 +328,8 @@ export default function InvoicesPage() {
                     <tr key={i}>
                       <td className="p-2.5 text-zinc-900">{item.description}</td>
                       <td className="p-2.5 text-center font-mono">{item.quantity}</td>
-                      <td className="p-2.5 text-right font-mono">₹{item.unitPrice.toLocaleString()}</td>
-                      <td className="p-2.5 text-right font-mono font-medium text-zinc-900">₹{item.amount.toLocaleString()}</td>
+                      <td className="p-2.5 text-right font-mono">₹{formatCurrency(item.unitPrice)}</td>
+                      <td className="p-2.5 text-right font-mono font-medium text-zinc-900">₹{formatCurrency(item.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -340,23 +341,23 @@ export default function InvoicesPage() {
               <div className="w-64 space-y-1.5 font-mono text-xs">
                 <div className="flex justify-between text-zinc-500">
                   <span>Taxable Value:</span>
-                  <span>₹{selectedInvoice.subtotal.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedInvoice.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-zinc-500">
                   <span>18% GST (CGST+SGST):</span>
-                  <span>₹{selectedInvoice.taxAmount.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedInvoice.taxAmount)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-zinc-950 pt-2 border-t border-zinc-200 text-sm">
                   <span>Invoice Total:</span>
-                  <span>₹{selectedInvoice.totalAmount.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedInvoice.totalAmount)}</span>
                 </div>
                 <div className="flex justify-between text-emerald-600 font-semibold">
                   <span>Amount Paid:</span>
-                  <span>₹{selectedInvoice.paidAmount.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedInvoice.paidAmount)}</span>
                 </div>
                 <div className="flex justify-between text-rose-600 font-bold border-t border-zinc-100 pt-1">
                   <span>Balance Due:</span>
-                  <span>₹{selectedInvoice.balanceDue.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedInvoice.balanceDue)}</span>
                 </div>
               </div>
             </div>
@@ -453,7 +454,7 @@ export default function InvoicesPage() {
 
           <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-lg flex items-center justify-between font-mono text-xs">
             <span className="font-semibold text-zinc-900">Total Due (incl. GST):</span>
-            <span className="font-bold text-zinc-950 text-sm">₹{invoiceData.totalAmount.toLocaleString()}</span>
+            <span className="font-bold text-zinc-950 text-sm">₹{formatCurrency(invoiceData.totalAmount)}</span>
           </div>
         </form>
       </Modal>

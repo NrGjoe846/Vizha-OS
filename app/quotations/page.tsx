@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
+import { formatCurrency } from '@/lib/format';
 
 export default function QuotationsPage() {
   const { quotations, addQuotation, updateQuotationStatus, clients, events } = useERP();
@@ -127,9 +128,9 @@ export default function QuotationsPage() {
                     <p className="text-[11px] text-zinc-500 truncate max-w-xs">{q.eventTitle}</p>
                   </td>
                   <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">{q.issueDate}</td>
-                  <td className="py-3 px-4 font-mono text-zinc-600">₹{(q.subtotal).toLocaleString()}</td>
-                  <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">₹{(q.taxAmount).toLocaleString()}</td>
-                  <td className="py-3 px-4 font-mono font-semibold text-zinc-950">₹{(q.totalAmount).toLocaleString()}</td>
+                  <td className="py-3 px-4 font-mono text-zinc-600">₹{formatCurrency(q.subtotal)}</td>
+                  <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">₹{formatCurrency(q.taxAmount)}</td>
+                  <td className="py-3 px-4 font-mono font-semibold text-zinc-950">₹{formatCurrency(q.totalAmount)}</td>
                   <td className="py-3 px-4">
                     <Badge
                       variant={
@@ -236,8 +237,8 @@ export default function QuotationsPage() {
                     <tr key={i}>
                       <td className="p-2.5 text-zinc-900">{item.description}</td>
                       <td className="p-2.5 text-center font-mono">{item.quantity}</td>
-                      <td className="p-2.5 text-right font-mono">₹{item.unitPrice.toLocaleString()}</td>
-                      <td className="p-2.5 text-right font-mono font-medium text-zinc-900">₹{item.amount.toLocaleString()}</td>
+                      <td className="p-2.5 text-right font-mono">₹{formatCurrency(item.unitPrice)}</td>
+                      <td className="p-2.5 text-right font-mono font-medium text-zinc-900">₹{formatCurrency(item.amount)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -249,21 +250,21 @@ export default function QuotationsPage() {
               <div className="w-64 space-y-1.5 font-mono text-xs">
                 <div className="flex justify-between text-zinc-500">
                   <span>Subtotal:</span>
-                  <span>₹{selectedQuotation.subtotal.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedQuotation.subtotal)}</span>
                 </div>
                 <div className="flex justify-between text-zinc-500">
                   <span>18% GST:</span>
-                  <span>₹{selectedQuotation.taxAmount.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedQuotation.taxAmount)}</span>
                 </div>
                 {selectedQuotation.discount > 0 && (
                   <div className="flex justify-between text-rose-600">
                     <span>Discount:</span>
-                    <span>-₹{selectedQuotation.discount.toLocaleString()}</span>
+                    <span>-₹{formatCurrency(selectedQuotation.discount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between font-bold text-zinc-950 pt-2 border-t border-zinc-200 text-sm">
                   <span>Grand Total:</span>
-                  <span>₹{selectedQuotation.totalAmount.toLocaleString()}</span>
+                  <span>₹{formatCurrency(selectedQuotation.totalAmount)}</span>
                 </div>
               </div>
             </div>
@@ -365,7 +366,7 @@ export default function QuotationsPage() {
 
           <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-lg flex items-center justify-between font-mono text-xs">
             <span className="font-semibold text-zinc-900">Calculated Total:</span>
-            <span className="font-bold text-zinc-950 text-sm">₹{formData.totalAmount.toLocaleString()}</span>
+            <span className="font-bold text-zinc-950 text-sm">₹{formatCurrency(formData.totalAmount)}</span>
           </div>
         </form>
       </Modal>

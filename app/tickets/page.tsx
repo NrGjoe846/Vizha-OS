@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { StatCard } from '@/components/ui/StatCard';
+import { formatCurrency } from '@/lib/format';
 
 export default function TicketsPage() {
   const { tickets, ticketTypes, verifyTicket, issueTicket } = useERP();
@@ -204,7 +205,7 @@ export default function TicketsPage() {
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-semibold text-zinc-950">{tier.name}</h4>
                     <span className="text-xs font-mono font-bold text-zinc-900">
-                      ₹{tier.price.toLocaleString()}
+                      ₹{formatCurrency(tier.price)}
                     </span>
                   </div>
                   <p className="text-[11px] text-zinc-500 mt-1 line-clamp-1">Official admission pass</p>
@@ -309,7 +310,7 @@ export default function TicketsPage() {
           >
             {ticketTypes.map(tt => (
               <option key={tt.id} value={tt.id}>
-                {tt.name} (₹{tt.price.toLocaleString()})
+                {tt.name} (₹{formatCurrency(tt.price)})
               </option>
             ))}
           </Select>

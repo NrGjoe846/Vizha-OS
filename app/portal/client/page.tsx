@@ -18,6 +18,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { formatCurrency } from '@/lib/format';
 
 export default function ClientPortalPage() {
   const { events, quotations, invoices, currentUser } = useERP();
@@ -114,7 +115,7 @@ export default function ClientPortalPage() {
                 <FileText className="w-4 h-4 text-zinc-400" />
                 <span className="text-xs font-semibold text-zinc-950">Proposal {clientQuotation.quotationNo}</span>
               </div>
-              <p className="text-[11px] font-mono text-zinc-500">Total: ₹{clientQuotation.totalAmount.toLocaleString()}</p>
+              <p className="text-[11px] font-mono text-zinc-500">Total: ₹{formatCurrency(clientQuotation.totalAmount)}</p>
             </div>
             <Link href="/quotations">
               <Button variant="outline" size="sm">
@@ -131,7 +132,7 @@ export default function ClientPortalPage() {
                 <Receipt className="w-4 h-4 text-zinc-400" />
                 <span className="text-xs font-semibold text-zinc-950">Tax Invoice {clientInvoice.invoiceNo}</span>
               </div>
-              <p className="text-[11px] font-mono text-zinc-500">Balance: ₹{clientInvoice.balanceDue.toLocaleString()}</p>
+              <p className="text-[11px] font-mono text-zinc-500">Balance: ₹{formatCurrency(clientInvoice.balanceDue)}</p>
             </div>
             <Link href="/invoices">
               <Button variant="outline" size="sm">

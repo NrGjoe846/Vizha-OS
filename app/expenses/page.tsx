@@ -20,6 +20,7 @@ import { Input, Select } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { Tabs } from '@/components/ui/Tabs';
 import { StatCard } from '@/components/ui/StatCard';
+import { formatCurrency } from '@/lib/format';
 
 export default function ExpensesPage() {
   const { expenses, addExpense, updateExpenseStatus, events } = useERP();
@@ -101,14 +102,14 @@ export default function ExpensesPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <StatCard
           label="Approved Production Spend"
-          value={`₹${(totalSpent).toLocaleString()}`}
+          value={`₹${formatCurrency(totalSpent)}`}
           changeType="neutral"
           icon={<CreditCard className="w-4 h-4" />}
           description="Disbursed and approved vendor outlays"
         />
         <StatCard
           label="Pending Approvals"
-          value={`₹${(pendingSpent).toLocaleString()}`}
+          value={`₹${formatCurrency(pendingSpent)}`}
           changeType="negative"
           icon={<TrendingDown className="w-4 h-4" />}
           description="Awaiting project director sign-off"
@@ -150,7 +151,7 @@ export default function ExpensesPage() {
                   </td>
                   <td className="py-3 px-4 text-zinc-700">{exp.description}</td>
                   <td className="py-3 px-4 text-zinc-500">{exp.vendorName}</td>
-                  <td className="py-3 px-4 font-mono font-semibold text-zinc-950">₹{exp.amount.toLocaleString()}</td>
+                  <td className="py-3 px-4 font-mono font-semibold text-zinc-950">₹{formatCurrency(exp.amount)}</td>
                   <td className="py-3 px-4">
                     <Badge
                       variant={

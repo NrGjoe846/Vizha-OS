@@ -19,7 +19,14 @@ import {
   EventStatus,
   EventEquipmentRequisition,
   VendorWorkOrder,
-  AuditLog
+  AuditLog,
+  CRMCampaign,
+  CRMActivity,
+  CRMFollowUp,
+  CRMEventFunction,
+  CRMLeadScore,
+  CRMLossRecord,
+  CRMNegotiation
 } from './types';
 import {
   DEMO_USERS,
@@ -37,7 +44,8 @@ import {
   INITIAL_TICKETS,
   INITIAL_REQUISITIONS,
   INITIAL_WORK_ORDERS,
-  INITIAL_AUDIT_LOGS
+  INITIAL_AUDIT_LOGS,
+  INITIAL_CAMPAIGNS
 } from './mock-data';
 
 interface ERPContextType {
@@ -53,12 +61,27 @@ interface ERPContextType {
   clients: Client[];
   addClient: (client: Omit<Client, 'id' | 'totalBookings' | 'totalSpent'>) => void;
 
-  // Leads
+  // Leads & CRM Pipeline
   leads: Lead[];
   addLead: (lead: Omit<Lead, 'id' | 'createdAt'>) => void;
-  updateLeadStage: (id: string, stage: LeadStage) => void;
+  updateLead: (id: string, updates: Partial<Lead>) => void;
+  updateLeadStage: (id: string, stage: LeadStage, validationRemarks?: string) => void;
   convertLead: (leadId: string) => { client: Client; event: EventModel };
   convertLeadToQuotation: (leadId: string) => Quotation;
+  addLeadActivity: (leadId: string, activity: Omit<CRMActivity, 'id' | 'leadId' | 'timestamp'>) => void;
+  scheduleLeadFollowUp: (leadId: string, followUp: Omit<CRMFollowUp, 'id' | 'leadId' | 'isCompleted'>) => void;
+  completeLeadFollowUp: (followUpId: string, outcome: string) => void;
+  assignLead: (leadId: string, newSalesperson: string, reason: string) => void;
+  markLeadLost: (leadId: string, lossRecord: CRMLossRecord) => void;
+  reopenLead: (leadId: string) => void;
+  updateLeadScore: (leadId: string, score: CRMLeadScore) => void;
+  saveLeadFunctions: (leadId: string, functions: CRMEventFunction[]) => void;
+  saveLeadNegotiation: (leadId: string, negotiation: CRMNegotiation) => void;
+  executeOperationsHandover: (leadId: string, handoverNotes: string, assignedManager?: string) => { client: Client; event: EventModel };
+
+  // Marketing Campaigns
+  campaigns: CRMCampaign[];
+  addCampaign: (campaign: Omit<CRMCampaign, 'id' | 'leadsGenerated' | 'wonBookings' | 'revenueGenerated'>) => void;
 
   // Venues & Vendors
   venues: Venue[];
@@ -147,6 +170,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
   const [ticketTypes, setTicketTypes] = useState<TicketType[]>(INITIAL_TICKET_TYPES);
   const [tickets, setTickets] = useState<Ticket[]>(INITIAL_TICKETS);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [campaigns, setCampaigns] = useState<CRMCampaign[]>(INITIAL_CAMPAIGNS);
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Load from local storage
@@ -170,6 +194,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         if (parsed.ticketTypes) setTicketTypes(parsed.ticketTypes);
         if (parsed.tickets) setTickets(parsed.tickets);
         if (parsed.auditLogs) setAuditLogs(parsed.auditLogs);
+        if (parsed.campaigns) setCampaigns(parsed.campaigns);
         if (parsed.selectedBranch) setSelectedBranch(parsed.selectedBranch);
         if (parsed.currentUserId) {
           const user = DEMO_USERS.find(u => u.id === parsed.currentUserId);
@@ -204,7 +229,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         guests,
         ticketTypes,
         tickets,
-        auditLogs
+        auditLogs,
+        campaigns
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -228,7 +254,8 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     guests,
     ticketTypes,
     tickets,
-    auditLogs
+    auditLogs,
+    campaigns
   ]);
 
   const logAuditAction = (
@@ -278,9 +305,312 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     logAuditAction(`Logged New Sales Lead`, 'lead', newLead.id, `Inbound lead registered: ${newLead.title} for ${newLead.clientName}`);
   };
 
-  const updateLeadStage = (id: string, stage: LeadStage) => {
-    setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, stage } : lead));
-    logAuditAction(`Updated Lead Stage`, 'lead', id, `Lead stage updated to ${stage.toUpperCase()}`);
+  const updateLead = (id: string, updates: Partial<Lead>) => {
+    setLeads(prev => prev.map(lead => lead.id === id ? { ...lead, ...updates } : lead));
+    logAuditAction(`Updated Lead Profile`, 'lead', id, `Updated CRM fields on lead`);
+  };
+
+  const updateLeadStage = (id: string, stage: LeadStage, validationRemarks?: string) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== id) return lead;
+        return {
+          ...lead,
+          stage,
+          stageUpdatedAt: new Date().toISOString().split('T')[0],
+          daysInCurrentStage: 0
+        };
+      })
+    );
+    logAuditAction(
+      `Updated Lead Pipeline Stage`,
+      'lead',
+      id,
+      `Advanced to ${stage.toUpperCase()}${validationRemarks ? ` (${validationRemarks})` : ''}`
+    );
+  };
+
+  const addLeadActivity = (leadId: string, activityData: Omit<CRMActivity, 'id' | 'leadId' | 'timestamp'>) => {
+    const newActivity: CRMActivity = {
+      ...activityData,
+      id: `act-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      leadId,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16)
+    };
+
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return {
+          ...lead,
+          activities: [newActivity, ...(lead.activities || [])]
+        };
+      })
+    );
+    logAuditAction(
+      `Logged CRM Activity: ${activityData.type.toUpperCase()}`,
+      'lead',
+      leadId,
+      `${activityData.title} - Outcome: ${activityData.outcome || 'Logged'}`
+    );
+  };
+
+  const scheduleLeadFollowUp = (leadId: string, followUpData: Omit<CRMFollowUp, 'id' | 'leadId' | 'isCompleted'>) => {
+    const newFollowUp: CRMFollowUp = {
+      ...followUpData,
+      id: `fu-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      leadId,
+      isCompleted: false
+    };
+
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return {
+          ...lead,
+          followUps: [newFollowUp, ...(lead.followUps || [])]
+        };
+      })
+    );
+    logAuditAction(
+      `Scheduled Follow-up`,
+      'lead',
+      leadId,
+      `${followUpData.activityType.toUpperCase()} for ${followUpData.scheduledDate} ${followUpData.scheduledTime} assigned to ${followUpData.assignedTo}`
+    );
+  };
+
+  const completeLeadFollowUp = (followUpId: string, outcome: string) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (!lead.followUps) return lead;
+        const updatedFollowUps = lead.followUps.map(fu =>
+          fu.id === followUpId
+            ? { ...fu, isCompleted: true, completedAt: new Date().toISOString().replace('T', ' ').substring(0, 16), outcome }
+            : fu
+        );
+        return { ...lead, followUps: updatedFollowUps };
+      })
+    );
+    logAuditAction(`Completed Scheduled Follow-up`, 'lead', followUpId, `Outcome: ${outcome}`);
+  };
+
+  const assignLead = (leadId: string, newSalesperson: string, reason: string) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        const transfer = {
+          fromUser: lead.assignedTo,
+          toUser: newSalesperson,
+          date: new Date().toISOString().split('T')[0],
+          reason
+        };
+        return {
+          ...lead,
+          assignedTo: newSalesperson,
+          transferHistory: [transfer, ...(lead.transferHistory || [])]
+        };
+      })
+    );
+    logAuditAction(`Reassigned Lead Owner`, 'lead', leadId, `Transferred lead to ${newSalesperson}. Reason: ${reason}`);
+  };
+
+  const markLeadLost = (leadId: string, lossRecord: CRMLossRecord) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return {
+          ...lead,
+          stage: 'lost',
+          lossRecord,
+          stageUpdatedAt: new Date().toISOString().split('T')[0],
+          daysInCurrentStage: 0
+        };
+      })
+    );
+    logAuditAction(
+      `Marked Lead as Lost`,
+      'lead',
+      leadId,
+      `Reason: ${lossRecord.lossReason}${lossRecord.competitorName ? ` (Competitor: ${lossRecord.competitorName})` : ''}`
+    );
+  };
+
+  const reopenLead = (leadId: string) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return {
+          ...lead,
+          stage: 'qualified',
+          lossRecord: undefined,
+          stageUpdatedAt: new Date().toISOString().split('T')[0],
+          daysInCurrentStage: 0
+        };
+      })
+    );
+    logAuditAction(`Reopened Lost Lead for Nurture`, 'lead', leadId, `Re-engaged opportunity moved back to Qualified stage.`);
+  };
+
+  const updateLeadScore = (leadId: string, score: CRMLeadScore) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return { ...lead, score };
+      })
+    );
+    logAuditAction(`Calculated Lead Qualification Score`, 'lead', leadId, `Score updated to ${score.totalScore}/100 (${score.category})`);
+  };
+
+  const saveLeadFunctions = (leadId: string, functions: CRMEventFunction[]) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return { ...lead, functions };
+      })
+    );
+    logAuditAction(`Saved Multi-Function Event Requirements`, 'lead', leadId, `Defined ${functions.length} event functions.`);
+  };
+
+  const saveLeadNegotiation = (leadId: string, negotiation: CRMNegotiation) => {
+    setLeads(prev =>
+      prev.map(lead => {
+        if (lead.id !== leadId) return lead;
+        return { ...lead, negotiation };
+      })
+    );
+    logAuditAction(`Updated Commercial Negotiation Terms`, 'lead', leadId, `Negotiated Price: ₹${negotiation.negotiatedPrice.toLocaleString('en-IN')}, Margin: ${negotiation.expectedGrossMargin}%`);
+  };
+
+  const executeOperationsHandover = (leadId: string, handoverNotes: string, assignedManager = 'Priya Sharma') => {
+    const lead = leads.find(l => l.id === leadId);
+    if (!lead) throw new Error('Lead not found');
+
+    // 1. Create or link Client
+    const existingClient = clients.find(c => c.name.toLowerCase() === lead.clientName.toLowerCase() || c.email.toLowerCase() === lead.email.toLowerCase());
+    let clientToUse: Client;
+
+    if (existingClient) {
+      clientToUse = {
+        ...existingClient,
+        totalBookings: existingClient.totalBookings + 1,
+        totalSpent: existingClient.totalSpent + (lead.negotiation?.negotiatedPrice || lead.estimatedBudget)
+      };
+      setClients(prev => prev.map(c => c.id === existingClient.id ? clientToUse : c));
+    } else {
+      clientToUse = {
+        id: `c-${Date.now()}`,
+        name: lead.clientName,
+        companyName: lead.companyName || undefined,
+        email: lead.email,
+        phone: lead.phone,
+        city: lead.city || 'Mumbai',
+        totalBookings: 1,
+        totalSpent: lead.negotiation?.negotiatedPrice || lead.estimatedBudget
+      };
+      setClients(prev => [clientToUse, ...prev]);
+    }
+
+    // 2. Create Event Record
+    const newEvent: EventModel = {
+      id: `evt-${Date.now()}`,
+      code: `EVT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      title: lead.title,
+      eventType: lead.eventType,
+      clientName: clientToUse.name,
+      clientId: clientToUse.id,
+      venueName: lead.venueName || lead.eventLocation || 'The Grand Oberoi Ballroom, Mumbai',
+      managerName: assignedManager,
+      startDate: lead.eventDate || new Date().toISOString().split('T')[0],
+      endDate: lead.eventEndDate || lead.eventDate || new Date().toISOString().split('T')[0],
+      guestCount: lead.guestCount || 200,
+      status: 'confirmed',
+      budget: lead.negotiation?.negotiatedPrice || lead.estimatedBudget,
+      actualSpend: 0,
+      coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&auto=format&fit=crop&q=80',
+      branchName: lead.branchName || 'Mumbai HQ',
+      schedules: (lead.functions && lead.functions.length > 0)
+        ? lead.functions.map((fn, idx) => ({
+            id: `sch-${Date.now()}-${idx + 1}`,
+            dayNumber: idx + 1,
+            timeSlot: fn.startTime ? `${fn.startTime} - ${fn.endTime || 'Late'}` : '18:00 - 23:00',
+            title: fn.functionName,
+            description: `${fn.theme ? `Theme: ${fn.theme}. ` : ''}Services: ${fn.servicesNeeded.join(', ')}`,
+            leadPerson: assignedManager,
+            cueNotes: fn.notes,
+            isCompleted: false
+          }))
+        : [
+            {
+              id: `sch-${Date.now()}-1`,
+              dayNumber: 1,
+              timeSlot: '10:00 - 12:00',
+              title: 'Welcome & Registration',
+              description: 'Guest check-in & welcome reception.',
+              leadPerson: assignedManager,
+              isCompleted: false
+            }
+          ],
+      tasks: [
+        {
+          id: `tsk-${Date.now()}-1`,
+          title: `Operational Handover Checklist: ${lead.title}`,
+          category: 'Production',
+          priority: 'urgent',
+          assignedTo: assignedManager,
+          dueDate: lead.eventDate,
+          isCompleted: false
+        },
+        {
+          id: `tsk-${Date.now()}-2`,
+          title: 'Confirm Final Floorplan & Security NOC',
+          category: 'Licensing',
+          priority: 'high',
+          assignedTo: assignedManager,
+          dueDate: lead.eventDate,
+          isCompleted: false
+        }
+      ]
+    };
+
+    setEvents(prev => [newEvent, ...prev]);
+
+    // 3. Mark Lead as Converted & Handover Completed
+    setLeads(prev =>
+      prev.map(l =>
+        l.id === leadId
+          ? {
+              ...l,
+              stage: 'converted',
+              handoverCompleted: true,
+              stageUpdatedAt: new Date().toISOString().split('T')[0],
+              daysInCurrentStage: 0,
+              notes: `${l.notes || ''}\n[Handover to ${assignedManager}]: ${handoverNotes}`
+            }
+          : l
+      )
+    );
+
+    logAuditAction(
+      `Completed Booking Conversion & Operations Handover`,
+      'event',
+      newEvent.id,
+      `Opportunity "${lead.title}" converted to Event ${newEvent.code}. Handover to Event Producer ${assignedManager}. Notes: ${handoverNotes}`
+    );
+
+    return { client: clientToUse, event: newEvent };
+  };
+
+  const addCampaign = (campaignData: Omit<CRMCampaign, 'id' | 'leadsGenerated' | 'wonBookings' | 'revenueGenerated'>) => {
+    const newCamp: CRMCampaign = {
+      ...campaignData,
+      id: `cmp-${Date.now()}`,
+      leadsGenerated: 0,
+      wonBookings: 0,
+      revenueGenerated: 0
+    };
+    setCampaigns(prev => [newCamp, ...prev]);
+    logAuditAction(`Created Marketing Campaign`, 'lead', newCamp.id, `Campaign ${newCamp.name} (${newCamp.source}) registered with budget ₹${newCamp.budget.toLocaleString('en-IN')}`);
   };
 
   const convertLeadToQuotation = (leadId: string): Quotation => {
@@ -936,6 +1266,7 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     setTicketTypes(INITIAL_TICKET_TYPES);
     setTickets(INITIAL_TICKETS);
     setAuditLogs(INITIAL_AUDIT_LOGS);
+    setCampaigns(INITIAL_CAMPAIGNS);
   };
 
   return (
@@ -950,9 +1281,22 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         addClient,
         leads,
         addLead,
+        updateLead,
         updateLeadStage,
         convertLead,
         convertLeadToQuotation,
+        addLeadActivity,
+        scheduleLeadFollowUp,
+        completeLeadFollowUp,
+        assignLead,
+        markLeadLost,
+        reopenLead,
+        updateLeadScore,
+        saveLeadFunctions,
+        saveLeadNegotiation,
+        executeOperationsHandover,
+        campaigns,
+        addCampaign,
         venues,
         vendors,
         addVenue,

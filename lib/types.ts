@@ -34,29 +34,155 @@ export type LeadStage =
   | 'new'
   | 'contacted'
   | 'qualified'
+  | 'meeting_scheduled'
+  | 'requirement_finalized'
   | 'proposal_sent'
   | 'negotiating'
+  | 'awaiting_confirmation'
   | 'converted'
   | 'lost';
 
+export interface CRMActivity {
+  id: string;
+  leadId: string;
+  type: 'call' | 'whatsapp' | 'email' | 'meeting' | 'site_visit' | 'note' | 'task';
+  title: string;
+  description: string;
+  performedBy: string;
+  timestamp: string;
+  outcome?: 'interested' | 'not_reachable' | 'call_back_later' | 'meeting_scheduled' | 'requirement_pending' | 'proposal_requested' | 'price_negotiation' | 'not_interested' | 'booking_confirmed';
+  nextAction?: string;
+  durationMinutes?: number;
+}
+
+export interface CRMFollowUp {
+  id: string;
+  leadId: string;
+  leadTitle: string;
+  clientName: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  assignedTo: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  activityType: 'call' | 'whatsapp' | 'meeting' | 'site_visit' | 'email';
+  notes: string;
+  isCompleted: boolean;
+  completedAt?: string;
+  outcome?: string;
+}
+
+export interface CRMEventFunction {
+  id: string;
+  functionName: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  venueName?: string;
+  guestCount: number;
+  theme?: string;
+  servicesNeeded: string[];
+  notes?: string;
+}
+
+export interface CRMLeadScore {
+  budgetScore: number; // max 20
+  dateScore: number; // max 15
+  engagementScore: number; // max 15
+  intentScore: number; // max 20
+  requirementScore: number; // max 10
+  decisionMakerScore: number; // max 10
+  feasibilityScore: number; // max 10
+  totalScore: number; // sum, max 100
+  category: 'Hot Lead' | 'Warm Lead' | 'Cold Lead';
+}
+
+export interface CRMLossRecord {
+  lossReason:
+    | 'Budget mismatch'
+    | 'Competitor selected'
+    | 'Date unavailable'
+    | 'Venue unavailable'
+    | 'Customer cancelled'
+    | 'No response'
+    | 'Service not available'
+    | 'Price too high'
+    | 'Duplicate enquiry'
+    | 'Invalid enquiry'
+    | 'Other';
+  competitorName?: string;
+  lossNotes?: string;
+  lostDate: string;
+  eligibleForNurture: boolean;
+}
+
+export interface CRMNegotiation {
+  initialBudget: number;
+  proposedPrice: number;
+  negotiatedPrice: number;
+  expectedCost: number;
+  expectedGrossMargin: number;
+  discountRequested: number;
+  discountApproved: boolean;
+  approvalNotes?: string;
+}
+
+export interface CRMCampaign {
+  id: string;
+  name: string;
+  code: string;
+  source: string;
+  budget: number;
+  leadsGenerated: number;
+  wonBookings: number;
+  revenueGenerated: number;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'completed' | 'paused';
+}
+
 export interface Lead {
   id: string;
+  leadNumber?: string;
   title: string;
   clientName: string;
   email: string;
   phone: string;
+  alternatePhone?: string;
   companyName?: string;
+  address?: string;
+  city?: string;
+  state?: string;
   eventType: string;
   estimatedBudget: number;
   guestCount: number;
   eventDate: string;
+  eventEndDate?: string;
+  eventLocation?: string;
+  venueId?: string;
+  venueName?: string;
   source: string;
+  campaign?: string;
   stage: LeadStage;
   priority: 'low' | 'medium' | 'high' | 'urgent';
   assignedTo: string;
+  branchName?: string;
   notes?: string;
   quotationId?: string;
   createdAt: string;
+  stageUpdatedAt?: string;
+  daysInCurrentStage?: number;
+
+  // CRM Pipeline Enterprise Extensions
+  score?: CRMLeadScore;
+  functions?: CRMEventFunction[];
+  activities?: CRMActivity[];
+  followUps?: CRMFollowUp[];
+  lossRecord?: CRMLossRecord;
+  negotiation?: CRMNegotiation;
+  transferHistory?: { fromUser: string; toUser: string; date: string; reason: string }[];
+  tags?: string[];
+  isDuplicateOf?: string;
+  handoverCompleted?: boolean;
 }
 
 export interface Venue {

@@ -4,20 +4,24 @@ import React from 'react';
 import Link from 'next/link';
 import { useERP } from '@/lib/store';
 import {
-  CalendarDays,
+  Calendar,
   Kanban,
   Receipt,
   Users,
   CheckCircle2,
   Clock,
-  AlertCircle,
-  TrendingUp,
-  ArrowUpRight,
+  ArrowRight,
+  Plus,
+  QrCode,
   Sparkles,
   MapPin,
-  QrCode,
-  DollarSign
+  TrendingUp,
+  Circle
 } from 'lucide-react';
+import { StatCard } from '@/components/ui/StatCard';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
   const { currentUser, events, leads, invoices, expenses, guests, toggleEventSchedule, toggleEventTask } = useERP();
@@ -25,8 +29,6 @@ export default function DashboardPage() {
   // Calculations
   const activeEvents = events.filter(e => e.status !== 'completed' && e.status !== 'cancelled');
   const totalBudget = activeEvents.reduce((acc, e) => acc + e.budget, 0);
-  const totalSpent = activeEvents.reduce((acc, e) => acc + e.actualSpend, 0);
-
   const pipelineValue = leads
     .filter(l => l.stage !== 'lost')
     .reduce((acc, l) => acc + l.estimatedBudget, 0);
@@ -43,320 +45,277 @@ export default function DashboardPage() {
   const featuredEvent = events[0];
 
   return (
-    <div className="space-y-8 max-w-7xl mx-auto">
-      {/* Welcome Banner */}
-      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden">
-        <div className="absolute right-0 top-0 bottom-0 opacity-10 pointer-events-none flex items-center pr-12">
-          <CalendarDays className="w-96 h-96 -rotate-12" />
-        </div>
-        <div className="relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/30 text-indigo-200 text-xs font-semibold backdrop-blur-md mb-3 border border-indigo-400/30">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Multi-Tenant Enterprise ERP &bull; {currentUser.branchName || 'Headquarters'}</span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-            Welcome back, {currentUser.name}
-          </h1>
-          <p className="text-indigo-200 text-sm mt-1 max-w-2xl font-light">
-            You are logged in as <span className="font-semibold text-white">{currentUser.roleTitle}</span>. Monitor active productions, track lead pipelines, check-in guests, and inspect GST invoicing below.
-          </p>
-
-          <div className="flex flex-wrap gap-3 mt-6">
-            <Link
-              href="/events"
-              className="px-4 py-2 bg-white text-indigo-900 rounded-xl text-xs font-semibold hover:bg-indigo-50 transition-colors shadow-md flex items-center gap-1.5"
-            >
-              <CalendarDays className="w-4 h-4 text-indigo-600" />
-              <span>Manage Events</span>
-            </Link>
-            <Link
-              href="/leads"
-              className="px-4 py-2 bg-indigo-700/60 hover:bg-indigo-700 border border-indigo-500/50 text-white rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
-            >
-              <Kanban className="w-4 h-4 text-indigo-300" />
-              <span>CRM Pipeline</span>
-            </Link>
-            <Link
-              href="/tickets"
-              className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-bold transition-colors shadow-md flex items-center gap-1.5"
-            >
-              <QrCode className="w-4 h-4 text-slate-900" />
-              <span>Open Gate QR Scanner</span>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* KPI Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-        {/* Card 1: Active Productions */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Productions</span>
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <CalendarDays className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-3">{activeEvents.length} Events</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">Allocated Budget:</span>
-            <span className="font-semibold text-slate-800">₹{(totalBudget / 100000).toFixed(1)}L</span>
-          </div>
-        </div>
-
-        {/* Card 2: CRM Pipeline */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Sales Pipeline</span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-3">₹{(pipelineValue / 100000).toFixed(1)} Lakhs</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">Active Enquiries:</span>
-            <span className="font-semibold text-emerald-700">{leads.filter(l => l.stage !== 'converted' && l.stage !== 'lost').length} leads</span>
-          </div>
-        </div>
-
-        {/* Card 3: Invoiced & Collected */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Collected Revenue</span>
-            <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Receipt className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-3">₹{(totalCollected / 100000).toFixed(1)} Lakhs</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">Balance Pending:</span>
-            <span className="font-semibold text-rose-600">₹{(pendingReceivables / 100000).toFixed(1)}L</span>
-          </div>
-        </div>
-
-        {/* Card 4: Guest Logistics */}
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Gate Check-in Ratio</span>
-            <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Users className="w-5 h-5" />
-            </div>
-          </div>
-          <p className="text-2xl font-bold text-slate-900 mt-3">{checkInRate}% Admitted</p>
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs">
-            <span className="text-slate-500">Checked In:</span>
-            <span className="font-semibold text-slate-800">{checkedInGuests} of {totalGuests} guests</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Two Columns: Run of Show & Production Tasks */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Live Minute-by-Minute Run of Show */}
-        <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-slate-900">Minute-by-Minute Run of Show</h2>
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-800">
-                  Live Event
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {featuredEvent.title} &bull; {featuredEvent.venueName}
-              </p>
-            </div>
-            <Link
-              href={`/events/${featuredEvent.id}`}
-              className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1"
-            >
-              <span>Full Production Deck</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          <div className="space-y-3.5">
-            {featuredEvent.schedules.map((sch) => (
-              <div
-                key={sch.id}
-                className={`p-4 rounded-xl border transition-all ${
-                  sch.isCompleted
-                    ? 'bg-slate-50/80 border-slate-200 opacity-75'
-                    : 'bg-white border-slate-200 hover:border-indigo-300 shadow-xs'
-                }`}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <button
-                      onClick={() => toggleEventSchedule(featuredEvent.id, sch.id)}
-                      className={`mt-0.5 w-5 h-5 rounded-md flex items-center justify-center border transition-colors ${
-                        sch.isCompleted
-                          ? 'bg-emerald-600 border-emerald-600 text-white'
-                          : 'border-slate-300 hover:border-indigo-600'
-                      }`}
-                    >
-                      {sch.isCompleted && <CheckCircle2 className="w-4 h-4" />}
-                    </button>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 font-mono">
-                          {sch.timeSlot}
-                        </span>
-                        <h3 className={`text-sm font-semibold ${sch.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                          {sch.title}
-                        </h3>
-                      </div>
-                      <p className="text-xs text-slate-600 mt-1">{sch.description}</p>
-                      {sch.cueNotes && (
-                        <div className="mt-2 text-[11px] bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-md flex items-center gap-1.5 font-medium">
-                          <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span><strong className="font-semibold">Cue Note:</strong> {sch.cueNotes}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <span className="text-[11px] text-slate-500 font-medium whitespace-nowrap bg-slate-100 px-2 py-0.5 rounded">
-                    Lead: {sch.leadPerson}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Right 1 Col: Urgent Production Checklist */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Production Checklist</h2>
-              <p className="text-xs text-slate-500">Tasks requiring immediate attention</p>
-            </div>
-            <span className="text-xs font-semibold px-2 py-0.5 bg-rose-50 text-rose-700 rounded-full border border-rose-200">
-              {featuredEvent.tasks.filter(t => !t.isCompleted).length} Pending
+    <div className="space-y-6 max-w-7xl mx-auto">
+      {/* Top Header & Greeting */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-zinc-200/80">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400">
+              Overview &bull; {currentUser.branchName || 'Headquarters'}
             </span>
           </div>
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-950">
+            Welcome, {currentUser.name}
+          </h1>
+          <p className="text-xs text-zinc-500 mt-0.5">
+            Signed in as <span className="font-medium text-zinc-800">{currentUser.roleTitle}</span>. Here is the operational pulse across active productions.
+          </p>
+        </div>
 
-          <div className="space-y-2.5 flex-1 overflow-y-auto">
-            {featuredEvent.tasks.map((task) => (
-              <div
-                key={task.id}
-                className={`p-3 rounded-xl border transition-all ${
-                  task.isCompleted ? 'bg-slate-50 border-slate-200 opacity-60' : 'bg-white border-slate-200'
-                }`}
-              >
-                <div className="flex items-start gap-2.5">
-                  <button
-                    onClick={() => toggleEventTask(featuredEvent.id, task.id)}
-                    className={`mt-0.5 w-4 h-4 rounded flex items-center justify-center border transition-colors ${
-                      task.isCompleted
-                        ? 'bg-emerald-600 border-emerald-600 text-white'
-                        : 'border-slate-300 hover:border-indigo-600'
-                    }`}
-                  >
-                    {task.isCompleted && <CheckCircle2 className="w-3.5 h-3.5" />}
-                  </button>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-xs font-medium ${task.isCompleted ? 'line-through text-slate-400' : 'text-slate-900'}`}>
-                      {task.title}
-                    </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 text-slate-600">
-                        {task.category}
-                      </span>
-                      <span className={`text-[10px] font-semibold px-1.5 py-0.2 rounded ${
-                        task.priority === 'urgent' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800'
-                      }`}>
-                        {task.priority}
-                      </span>
-                      <span className="text-[10px] text-slate-400">Due: {task.dueDate}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4 pt-3 border-t border-slate-100">
-            <Link
-              href="/events"
-              className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-            >
-              <span>View All Event Tasks</span>
-              <ArrowUpRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+        <div className="flex items-center gap-2">
+          <Link href="/events">
+            <Button variant="outline" size="sm" icon={<Calendar className="w-3.5 h-3.5" />}>
+              Events
+            </Button>
+          </Link>
+          <Link href="/leads">
+            <Button variant="outline" size="sm" icon={<Kanban className="w-3.5 h-3.5" />}>
+              Pipeline
+            </Button>
+          </Link>
+          <Link href="/tickets">
+            <Button variant="primary" size="sm" icon={<QrCode className="w-3.5 h-3.5" />}>
+              Gate Scanner
+            </Button>
+          </Link>
         </div>
       </div>
 
-      {/* Bottom Grid: CRM Deals + Recent Invoices */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* CRM Pipeline Leads */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">CRM Inquiries & Negotiations</h2>
-              <p className="text-xs text-slate-500">Prospective client accounts</p>
-            </div>
-            <Link href="/leads" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-              Open Kanban
-            </Link>
-          </div>
+      {/* KPI Stats Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          label="Active Productions"
+          value={activeEvents.length}
+          change="+2 this month"
+          changeType="positive"
+          icon={<Calendar className="w-4 h-4" />}
+          description={`₹${(totalBudget / 100000).toFixed(1)}L combined budget`}
+        />
+        <StatCard
+          label="Sales Pipeline"
+          value={`₹${(pipelineValue / 100000).toFixed(1)}L`}
+          change={`${leads.length} active leads`}
+          changeType="neutral"
+          icon={<Kanban className="w-4 h-4" />}
+          description="Qualified and proposal stages"
+        />
+        <StatCard
+          label="Receivables Due"
+          value={`₹${(pendingReceivables / 1000).toFixed(0)}k`}
+          change={`₹${(totalCollected / 1000).toFixed(0)}k received`}
+          changeType={pendingReceivables > 0 ? 'negative' : 'positive'}
+          icon={<Receipt className="w-4 h-4" />}
+          description={`${invoices.filter(i => i.status !== 'paid').length} invoices awaiting payment`}
+        />
+        <StatCard
+          label="Gate Check-Ins"
+          value={`${checkInRate}%`}
+          change={`${checkedInGuests} of ${totalGuests} checked in`}
+          changeType="positive"
+          icon={<Users className="w-4 h-4" />}
+          description="Live barcode & QR gate admissions"
+        />
+      </div>
 
-          <div className="divide-y divide-slate-100">
-            {leads.slice(0, 4).map((l) => (
-              <div key={l.id} className="py-3 flex items-center justify-between gap-3">
+      {/* Main 2-Column Operational Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left 2 Cols: Live Production Run-of-Show */}
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-xs font-bold text-slate-900">{l.title}</h4>
-                  <p className="text-[11px] text-slate-500">{l.clientName} &bull; {l.eventType}</p>
+                  <CardTitle>
+                    <span>Run of Show Timeline</span>
+                    <Badge variant="purple" dot className="ml-2 font-mono">Live Cue</Badge>
+                  </CardTitle>
+                  <CardDescription>
+                    {featuredEvent ? `${featuredEvent.title} • ${featuredEvent.venueName}` : 'No active production scheduled'}
+                  </CardDescription>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-900">₹{(l.estimatedBudget / 100000).toFixed(1)}L</p>
-                  <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold uppercase bg-indigo-50 text-indigo-700 border border-indigo-200">
-                    {l.stage.replace('_', ' ')}
-                  </span>
-                </div>
+                {featuredEvent && (
+                  <Link href={`/events/${featuredEvent.id}`}>
+                    <Button variant="ghost" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />}>
+                      Details
+                    </Button>
+                  </Link>
+                )}
               </div>
-            ))}
-          </div>
+            </CardHeader>
+
+            <CardContent className="space-y-3 pt-4">
+              {featuredEvent?.schedules && featuredEvent.schedules.length > 0 ? (
+                <div className="space-y-2.5">
+                  {featuredEvent.schedules.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => toggleEventSchedule(featuredEvent.id, item.id)}
+                      className={`group flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-all ${
+                        item.isCompleted
+                          ? 'bg-zinc-50/50 border-zinc-200/60 opacity-60'
+                          : 'bg-white border-zinc-200/80 hover:border-zinc-300 hover:shadow-2xs'
+                      }`}
+                    >
+                      <button
+                        type="button"
+                        className={`mt-0.5 w-4 h-4 rounded border flex items-center justify-center transition-colors shrink-0 ${
+                          item.isCompleted
+                            ? 'bg-zinc-900 border-zinc-900 text-white'
+                            : 'border-zinc-300 hover:border-zinc-500'
+                        }`}
+                      >
+                        {item.isCompleted && <CheckCircle2 className="w-3 h-3" />}
+                      </button>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className={`text-xs font-medium tracking-tight ${item.isCompleted ? 'line-through text-zinc-400' : 'text-zinc-900'}`}>
+                            {item.title}
+                          </p>
+                          <span className="text-[10px] font-mono text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200/60 shrink-0">
+                            {item.timeSlot}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-zinc-500 mt-0.5 line-clamp-1">{item.description}</p>
+                        {item.cueNotes && (
+                          <p className="text-[10px] font-mono text-amber-700 bg-amber-50/80 px-2 py-0.5 rounded mt-1.5 inline-block border border-amber-200/50">
+                            Cue: {item.cueNotes}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-zinc-400 py-4 text-center">No schedule cues available.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Active Events Overview Strip */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Active Productions</CardTitle>
+              <CardDescription>Multi-branch live events in progress or confirmed</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-zinc-100">
+                {activeEvents.slice(0, 4).map((evt) => (
+                  <div key={evt.id} className="p-4 flex items-center justify-between hover:bg-zinc-50/60 transition-colors">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link href={`/events/${evt.id}`} className="text-xs font-semibold text-zinc-900 hover:underline truncate">
+                          {evt.title}
+                        </Link>
+                        <Badge
+                          variant={evt.status === 'confirmed' ? 'success' : evt.status === 'in_progress' ? 'purple' : 'default'}
+                          dot
+                        >
+                          {evt.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-3 text-[11px] text-zinc-500">
+                        <span>{evt.clientName}</span>
+                        <span>&bull;</span>
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3 text-zinc-400" />
+                          {evt.venueName}
+                        </span>
+                        <span>&bull;</span>
+                        <span className="font-mono">{evt.startDate}</span>
+                      </div>
+                    </div>
+
+                    <div className="text-right shrink-0">
+                      <p className="text-xs font-mono font-medium text-zinc-900">
+                        ₹{(evt.budget).toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-zinc-400 mt-0.5">
+                        {evt.guestCount} guests
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Recent Invoices & Compliance */}
-        <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-base font-bold text-slate-900">Recent GST Tax Invoices</h2>
-              <p className="text-xs text-slate-500">18% GST compliant enterprise billing</p>
-            </div>
-            <Link href="/invoices" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800">
-              Manage Billing
-            </Link>
-          </div>
-
-          <div className="divide-y divide-slate-100">
-            {invoices.map((inv) => (
-              <div key={inv.id} className="py-3 flex items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold font-mono text-slate-900">{inv.invoiceNo}</span>
-                    <span className={`text-[10px] px-2 py-0.2 rounded-full font-semibold uppercase ${
-                      inv.status === 'paid'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : inv.status === 'partial'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}>
-                      {inv.status}
-                    </span>
+        {/* Right 1 Col: Production Tasks & CRM Quick Pulse */}
+        <div className="space-y-6">
+          {/* Production Tasks */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Production Checklist</CardTitle>
+              <CardDescription>Milestone verification items</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2.5 pt-4">
+              {featuredEvent?.tasks && featuredEvent.tasks.length > 0 ? (
+                featuredEvent.tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    onClick={() => toggleEventTask(featuredEvent.id, task.id)}
+                    className="flex items-start gap-2.5 p-2.5 rounded-lg border border-zinc-200/70 hover:bg-zinc-50 cursor-pointer transition-colors"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={task.isCompleted}
+                      onChange={() => {}}
+                      className="mt-0.5 rounded border-zinc-300 text-zinc-900 focus:ring-0 cursor-pointer"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-xs ${task.isCompleted ? 'line-through text-zinc-400' : 'text-zinc-800 font-medium'}`}>
+                        {task.title}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-[10px] text-zinc-500">{task.assignedTo}</span>
+                        <span className="text-[10px] font-mono text-zinc-400">&bull; {task.dueDate}</span>
+                      </div>
+                    </div>
                   </div>
-                  <p className="text-[11px] text-slate-500">{inv.clientName}</p>
+                ))
+              ) : (
+                <p className="text-xs text-zinc-400 text-center py-3">No active tasks.</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Recent CRM Inquiries */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Recent Leads</CardTitle>
+                  <CardDescription>Latest client inquiries</CardDescription>
                 </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-900">₹{inv.totalAmount.toLocaleString('en-IN')}</p>
-                  <p className="text-[10px] text-slate-500">Due: ₹{inv.balanceDue.toLocaleString('en-IN')}</p>
-                </div>
+                <Link href="/leads">
+                  <Button variant="ghost" size="sm" icon={<ArrowRight className="w-3 h-3" />}>
+                    Board
+                  </Button>
+                </Link>
               </div>
-            ))}
-          </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-zinc-100">
+                {leads.slice(0, 4).map((lead) => (
+                  <div key={lead.id} className="p-3.5 hover:bg-zinc-50/50 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-medium text-zinc-900 truncate">{lead.title}</p>
+                      <Badge variant="neutral" className="capitalize text-[10px]">
+                        {lead.stage.replace('_', ' ')}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-zinc-500 mt-1">
+                      <span>{lead.clientName}</span>
+                      <span className="font-mono font-medium text-zinc-800">
+                        ₹{(lead.estimatedBudget).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

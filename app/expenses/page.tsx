@@ -3,19 +3,28 @@
 import React, { useState } from 'react';
 import { useERP } from '@/lib/store';
 import {
-  Wallet,
+  CreditCard,
   Plus,
-  CheckCircle2,
-  XCircle,
-  Clock,
+  Check,
+  X,
+  Search,
   Filter,
   DollarSign,
   TrendingDown
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input, Select } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { Tabs } from '@/components/ui/Tabs';
+import { StatCard } from '@/components/ui/StatCard';
 
 export default function ExpensesPage() {
   const { expenses, addExpense, updateExpenseStatus, events } = useERP();
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -29,12 +38,25 @@ export default function ExpensesPage() {
     expenseDate: new Date().toISOString().split('T')[0]
   });
 
-  const filteredExpenses = filterCategory === 'all'
-    ? expenses
-    : expenses.filter(e => e.category === filterCategory);
-
   const totalSpent = expenses.reduce((acc, e) => acc + (e.status === 'approved' ? e.amount : 0), 0);
   const pendingSpent = expenses.reduce((acc, e) => acc + (e.status === 'pending' ? e.amount : 0), 0);
+
+  const categories = [
+    { id: 'all', label: 'All Expenses', count: expenses.length },
+    { id: 'Audio & Visual', label: 'Sound & AV' },
+    { id: 'Floral & Decor', label: 'Décor & Floral' },
+    { id: 'Catering & F&B', label: 'Catering' },
+    { id: 'Licensing & Permits', label: 'Licensing' },
+  ];
+
+  const filteredExpenses = expenses.filter(e => {
+    const matchesCategory = filterCategory === 'all' || e.category === filterCategory;
+    const matchesSearch =
+      e.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.vendorName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.eventTitle.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,114 +66,127 @@ export default function ExpensesPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Page Header */}
+      <PageHeader
+        title="Budgets & Expenses"
+        description="Direct production disbursements, vendor advances, staging hires, municipal NOC licenses, and approvals."
+        badge={
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+            {expenses.length} Records
+          </span>
+        }
+        actions={
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Budgets & Expense Tracking</h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-              {expenses.length} Expense Items
-            </span>
+            <div className="w-52">
+              <Input
+                placeholder="Search expenses..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<Search className="w-3.5 h-3.5" />}
+              />
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Log Expense
+            </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Vendor advances, equipment hire, municipal NOC licensing, and operational disbursement logs.
-          </p>
-        </div>
+        }
+      />
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Log Direct Expense</span>
-        </button>
+      {/* Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard
+          label="Approved Production Spend"
+          value={`₹${(totalSpent).toLocaleString()}`}
+          changeType="neutral"
+          icon={<CreditCard className="w-4 h-4" />}
+          description="Disbursed and approved vendor outlays"
+        />
+        <StatCard
+          label="Pending Approvals"
+          value={`₹${(pendingSpent).toLocaleString()}`}
+          changeType="negative"
+          icon={<TrendingDown className="w-4 h-4" />}
+          description="Awaiting project director sign-off"
+        />
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Approved Production Spend</span>
-            <p className="text-2xl font-extrabold text-slate-900 mt-2">₹{totalSpent.toLocaleString('en-IN')}</p>
-            <p className="text-xs text-slate-400 mt-1">Cleared by Finance Team</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
-            <Wallet className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex items-center justify-between">
-          <div>
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Pending Approvals</span>
-            <p className="text-2xl font-extrabold text-amber-600 mt-2">₹{pendingSpent.toLocaleString('en-IN')}</p>
-            <p className="text-xs text-slate-400 mt-1">Awaiting Lead Accountant Sign-off</p>
-          </div>
-          <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <Clock className="w-6 h-6" />
-          </div>
-        </div>
-      </div>
+      {/* Filter Tabs */}
+      <Tabs
+        items={categories}
+        activeId={filterCategory}
+        onChange={setFilterCategory}
+      />
 
       {/* Expenses Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200/80 text-zinc-500 font-mono uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4">Description</th>
                 <th className="py-3 px-4">Production Event</th>
                 <th className="py-3 px-4">Category</th>
-                <th className="py-3 px-4">Vendor / Payee</th>
-                <th className="py-3 px-4 text-right">Amount</th>
+                <th className="py-3 px-4">Description</th>
+                <th className="py-3 px-4">Vendor Payee</th>
+                <th className="py-3 px-4">Amount</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-center">Approval</th>
+                <th className="py-3 px-4 text-right">Approval Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100 text-zinc-700">
               {filteredExpenses.map((exp) => (
-                <tr key={exp.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-3.5 px-4 text-slate-500">{exp.expenseDate}</td>
-                  <td className="py-3.5 px-4 font-bold text-slate-900">{exp.description}</td>
-                  <td className="py-3.5 px-4 text-slate-600 max-w-[200px] truncate">{exp.eventTitle}</td>
-                  <td className="py-3.5 px-4">
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                <tr key={exp.id} className="hover:bg-zinc-50/60 transition-colors">
+                  <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">{exp.expenseDate}</td>
+                  <td className="py-3 px-4 font-medium text-zinc-900 truncate max-w-xs">{exp.eventTitle}</td>
+                  <td className="py-3 px-4">
+                    <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-100 text-zinc-600">
                       {exp.category}
                     </span>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-700 font-medium">{exp.vendorName}</td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">
-                    ₹{exp.amount.toLocaleString('en-IN')}
-                  </td>
-                  <td className="py-3.5 px-4">
-                    <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${
-                      exp.status === 'approved'
-                        ? 'bg-emerald-100 text-emerald-800'
-                        : exp.status === 'pending'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}>
+                  <td className="py-3 px-4 text-zinc-700">{exp.description}</td>
+                  <td className="py-3 px-4 text-zinc-500">{exp.vendorName}</td>
+                  <td className="py-3 px-4 font-mono font-semibold text-zinc-950">₹{exp.amount.toLocaleString()}</td>
+                  <td className="py-3 px-4">
+                    <Badge
+                      variant={
+                        exp.status === 'approved'
+                          ? 'success'
+                          : exp.status === 'pending'
+                          ? 'warning'
+                          : 'danger'
+                      }
+                      dot
+                    >
                       {exp.status}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="py-3.5 px-4 text-center">
-                    {exp.status === 'pending' && (
-                      <div className="flex items-center justify-center gap-1.5">
-                        <button
+                  <td className="py-3 px-4 text-right space-x-1">
+                    {exp.status === 'pending' ? (
+                      <>
+                        <Button
+                          variant="primary"
+                          size="sm"
+                          className="h-6 px-2 text-[10px]"
                           onClick={() => updateExpenseStatus(exp.id, 'approved')}
-                          className="p-1 rounded bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          title="Approve"
                         >
-                          <CheckCircle2 className="w-4 h-4" />
-                        </button>
-                        <button
+                          Approve
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-[10px] text-rose-600"
                           onClick={() => updateExpenseStatus(exp.id, 'rejected')}
-                          className="p-1 rounded bg-rose-50 text-rose-700 hover:bg-rose-100"
-                          title="Reject"
                         >
-                          <XCircle className="w-4 h-4" />
-                        </button>
-                      </div>
+                          Reject
+                        </Button>
+                      </>
+                    ) : (
+                      <span className="text-[11px] text-zinc-400 font-mono">Completed</span>
                     )}
                   </td>
                 </tr>
@@ -159,105 +194,90 @@ export default function ExpensesPage() {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {/* Modal: Add Expense */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <h2 className="text-base font-bold text-slate-900">Record Direct Event Expense</h2>
+      {/* Log Expense Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Log Production Expense"
+        description="Record an operational disbursement or vendor bill."
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleCreate}>
+              Save Expense
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreate} className="space-y-3.5">
+          <Select
+            label="Production Event"
+            value={formData.eventId}
+            onChange={(e) => {
+              const ev = events.find(item => item.id === e.target.value);
+              setFormData({
+                ...formData,
+                eventId: e.target.value,
+                eventTitle: ev?.title || ''
+              });
+            }}
+          >
+            {events.map(ev => (
+              <option key={ev.id} value={ev.id}>{ev.title}</option>
+            ))}
+          </Select>
 
-            <form onSubmit={handleCreate} className="space-y-3.5 mt-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Production Event</label>
-                <select
-                  value={formData.eventTitle}
-                  onChange={(e) => {
-                    const sel = events.find(ev => ev.title === e.target.value);
-                    setFormData({
-                      ...formData,
-                      eventTitle: e.target.value,
-                      eventId: sel?.id || 'evt-2026-001'
-                    });
-                  }}
-                  className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                >
-                  {events.map(ev => (
-                    <option key={ev.id} value={ev.title}>{ev.title}</option>
-                  ))}
-                </select>
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Expense Category"
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            >
+              <option value="Audio & Visual">Audio & Visual</option>
+              <option value="Floral & Decor">Floral & Decor</option>
+              <option value="Catering & F&B">Catering & F&B</option>
+              <option value="Licensing & Permits">Licensing & Permits</option>
+              <option value="Security & Gate Logistics">Security & Gate</option>
+              <option value="Artist & Entertainment">Artist & Entertainment</option>
+            </Select>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Expense Description *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Police Sound NOC & Decibel Clearance Fee"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Category</label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                  >
-                    <option value="Audio & Visual">Audio & Visual</option>
-                    <option value="Floral & Decor">Floral & Decor</option>
-                    <option value="Catering & Bar">Catering & Bar</option>
-                    <option value="Licensing & NOC">Licensing & NOC</option>
-                    <option value="Logistics & Fleet">Logistics & Fleet</option>
-                    <option value="Security">Security</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Amount (₹) *</label>
-                  <input
-                    type="number"
-                    required
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Vendor / Payee</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Municipal Police Department"
-                  value={formData.vendorName}
-                  onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md"
-                >
-                  Save Expense
-                </button>
-              </div>
-            </form>
+            <Input
+              label="Disbursement Date"
+              type="date"
+              value={formData.expenseDate}
+              onChange={(e) => setFormData({ ...formData, expenseDate: e.target.value })}
+            />
           </div>
-        </div>
-      )}
+
+          <Input
+            label="Line Item Description"
+            required
+            placeholder="e.g. Line array rigging & moving head hire advance"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Vendor / Payee Entity"
+              placeholder="e.g. Aura Pro Audio & Rigging"
+              value={formData.vendorName}
+              onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
+            />
+            <Input
+              label="Amount (₹)"
+              type="number"
+              required
+              value={formData.amount}
+              onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

@@ -5,16 +5,18 @@ import Link from 'next/link';
 import { useERP } from '@/lib/store';
 import {
   Truck,
-  CalendarDays,
+  Calendar,
   MapPin,
   Clock,
   CheckCircle2,
   AlertCircle,
-  DollarSign,
-  ArrowRight,
-  ShieldCheck,
-  FileCheck
+  FileText,
+  User
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
 export default function VendorPortalPage() {
   const { events, currentUser } = useERP();
@@ -23,90 +25,100 @@ export default function VendorPortalPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      {/* Header Banner */}
-      <div className="bg-gradient-to-r from-teal-900 via-slate-900 to-indigo-950 rounded-2xl p-6 md:p-8 text-white shadow-xl">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-semibold backdrop-blur-md mb-3 border border-white/20">
-          <ShieldCheck className="w-3.5 h-3.5 text-teal-300" />
-          <span>Vendor Partner Work Orders & AV Dispatch</span>
-        </div>
-        <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
-          Welcome, {currentUser.name}
-        </h1>
-        <p className="text-teal-200 text-xs mt-1">
-          SoundCraft Pro Audio & Visuals &bull; Work Order #WO-2026-902
-        </p>
-      </div>
+      {/* Page Header */}
+      <PageHeader
+        title="Vendor Partner Portal"
+        description={`Welcome, ${currentUser.name}. Access your active dispatch work orders, rigging schedules, and staging assignments.`}
+        badge={<Badge variant="purple" dot>Work Order #WO-2026-902</Badge>}
+        actions={
+          <Link href="/dashboard">
+            <Button variant="outline" size="sm">
+              Return to ERP Console
+            </Button>
+          </Link>
+        }
+      />
 
       {/* Production Assignment */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-          <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-teal-700">Contracted Production</span>
-            <h2 className="text-lg font-bold text-slate-900 mt-0.5">{assignedEvent.title}</h2>
-          </div>
-          <span className="text-xs px-2.5 py-1 rounded-full font-bold uppercase bg-teal-50 text-teal-800 border border-teal-200">
-            Work Order Active
-          </span>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600">
-          <div className="flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-teal-600" />
-            <span>{assignedEvent.venueName}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <CalendarDays className="w-4 h-4 text-teal-600" />
-            <span>Setup & Soundcheck: {assignedEvent.startDate}</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-teal-600" />
-            <span>Show Producer: {assignedEvent.managerName}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Technical Scope of Work & Rigging Notes */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
-        <h3 className="text-sm font-bold text-slate-900">Technical Scope of Work & Rigging Cue Schedule</h3>
-        <div className="space-y-3">
-          {assignedEvent.schedules.map((sch) => (
-            <div key={sch.id} className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/70 flex items-start justify-between gap-3 text-xs">
+      {assignedEvent && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
               <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono font-bold text-teal-800 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                    {sch.timeSlot}
-                  </span>
-                  <span className="font-bold text-slate-900">{sch.title}</span>
-                </div>
-                {sch.cueNotes && (
-                  <div className="mt-2 text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded flex items-center gap-1.5 font-medium">
-                    <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                    <span>AV Cue: {sch.cueNotes}</span>
-                  </div>
-                )}
+                <span className="text-[10px] font-mono uppercase text-zinc-400">Assigned Production</span>
+                <CardTitle className="text-base mt-0.5">{assignedEvent.title}</CardTitle>
               </div>
-              <span className="text-[11px] font-semibold text-slate-500 whitespace-nowrap">
-                Coordination: {sch.leadPerson}
-              </span>
+              <Badge variant="success" dot>
+                Work Order Active
+              </Badge>
             </div>
-          ))}
-        </div>
-      </div>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-zinc-600">
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-zinc-400 shrink-0" />
+                <span className="truncate">{assignedEvent.venueName}</span>
+              </div>
+              <div className="flex items-center gap-2 font-mono">
+                <Calendar className="w-4 h-4 text-zinc-400 shrink-0" />
+                <span>Rigging Date: {assignedEvent.startDate}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <User className="w-4 h-4 text-zinc-400 shrink-0" />
+                <span>Show Producer: {assignedEvent.managerName}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Subcontractor Financials */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Agreed Contract Value</span>
-          <p className="text-2xl font-extrabold text-slate-900">₹8,50,000</p>
-          <p className="text-xs text-slate-500">Includes Line Array Audio, Intelligent Moving Lights & LED Wall</p>
-        </div>
+      {/* Technical Rigging Scope */}
+      {assignedEvent && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Technical Scope & Rigging Schedule</CardTitle>
+            <CardDescription>Minute-by-minute AV line checks, sound cues, and staging transitions</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-4">
+            <div className="divide-y divide-zinc-100">
+              {assignedEvent.schedules.map((sch) => (
+                <div key={sch.id} className="py-3 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-zinc-100 text-zinc-800">
+                        {sch.timeSlot}
+                      </span>
+                      <h4 className="text-xs font-semibold text-zinc-950">{sch.title}</h4>
+                    </div>
+                    <p className="text-xs text-zinc-500">{sch.description}</p>
+                    {sch.cueNotes && (
+                      <div className="text-[10px] font-mono text-amber-800 bg-amber-50/70 px-2 py-0.5 rounded border border-amber-200/50 inline-block mt-1">
+                        Trigger: {sch.cueNotes}
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-zinc-400 shrink-0 font-medium">
+                    {sch.leadPerson}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Mobilization Advance Cleared</span>
-          <p className="text-2xl font-extrabold text-emerald-600">₹5,00,000</p>
-          <p className="text-xs text-slate-500">Balance ₹3,50,000 upon strike & de-rigging sign-off</p>
+      {/* Subcontractor Purchase Order Details */}
+      <Card className="p-4 flex items-center justify-between text-xs">
+        <div className="space-y-0.5">
+          <p className="font-semibold text-zinc-950">Subcontractor Purchase Order #PO-AV-4401</p>
+          <p className="text-zinc-500 font-mono text-[11px]">Contract Value: ₹15,00,000 &bull; Advance 50% Released</p>
         </div>
-      </div>
+        <Link href="/expenses">
+          <Button variant="outline" size="sm">
+            Disbursement Ledger
+          </Button>
+        </Link>
+      </Card>
     </div>
   );
 }

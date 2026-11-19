@@ -3,23 +3,30 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useERP } from '@/lib/store';
-import { EventStatus, EventModel } from '@/lib/types';
+import { EventStatus } from '@/lib/types';
 import {
-  CalendarDays,
+  Calendar,
   Plus,
   MapPin,
   Users,
   Clock,
   ArrowRight,
   TrendingUp,
-  DollarSign,
-  Filter,
-  CheckCircle2
+  Search,
+  Filter
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input, Select } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { Tabs } from '@/components/ui/Tabs';
 
 export default function EventsPage() {
   const { events, addEvent, clients, venues } = useERP();
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // New Event Form State
@@ -40,9 +47,14 @@ export default function EventsPage() {
     coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&auto=format&fit=crop&q=80'
   });
 
-  const filteredEvents = filterStatus === 'all'
-    ? events
-    : events.filter(e => e.status === filterStatus);
+  const filteredEvents = events.filter((e) => {
+    const matchesStatus = filterStatus === 'all' || e.status === filterStatus;
+    const matchesSearch =
+      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      e.venueName.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesStatus && matchesSearch;
+  });
 
   const handleCreateEvent = (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,293 +62,273 @@ export default function EventsPage() {
     setIsModalOpen(false);
   };
 
-  const statusColors: Record<EventStatus, string> = {
-    draft: 'bg-slate-100 text-slate-800 border-slate-200',
-    planning: 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    confirmed: 'bg-blue-100 text-blue-800 border-blue-200',
-    in_progress: 'bg-emerald-100 text-emerald-800 border-emerald-200 animate-pulse',
-    completed: 'bg-slate-100 text-slate-600 border-slate-200',
-    cancelled: 'bg-rose-100 text-rose-800 border-rose-200'
+  const getStatusBadge = (status: EventStatus) => {
+    switch (status) {
+      case 'in_progress':
+        return <Badge variant="purple" dot>In Progress</Badge>;
+      case 'confirmed':
+        return <Badge variant="success" dot>Confirmed</Badge>;
+      case 'planning':
+        return <Badge variant="info" dot>Planning</Badge>;
+      case 'completed':
+        return <Badge variant="neutral">Completed</Badge>;
+      case 'cancelled':
+        return <Badge variant="danger">Cancelled</Badge>;
+      default:
+        return <Badge variant="default">{status}</Badge>;
+    }
   };
+
+  const tabs = [
+    { id: 'all', label: 'All Productions', count: events.length },
+    { id: 'in_progress', label: 'In Progress', count: events.filter(e => e.status === 'in_progress').length },
+    { id: 'planning', label: 'Planning', count: events.filter(e => e.status === 'planning').length },
+    { id: 'confirmed', label: 'Confirmed', count: events.filter(e => e.status === 'confirmed').length },
+  ];
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Event Productions</h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-              {events.length} Total Productions
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 mt-1">
-            End-to-end production operations, minute-by-minute run of show, and milestone execution.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Status filter */}
-          <select
-            value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 shadow-xs"
-          >
-            <option value="all">All Statuses</option>
-            <option value="in_progress">In Progress</option>
-            <option value="planning">Planning Phase</option>
-            <option value="confirmed">Confirmed</option>
-            <option value="completed">Completed</option>
-          </select>
-
-          <button
+      {/* Page Header */}
+      <PageHeader
+        title="Event Productions"
+        description="End-to-end event management, staging execution, minute-by-minute run of show, and milestone tracking."
+        badge={
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+            {events.length} Active
+          </span>
+        }
+        actions={
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
+            icon={<Plus className="w-3.5 h-3.5" />}
           >
-            <Plus className="w-4 h-4" />
-            <span>New Production</span>
-          </button>
+            Create Production
+          </Button>
+        }
+      />
+
+      {/* Filter & Search Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <Tabs items={tabs} activeId={filterStatus} onChange={setFilterStatus} />
+
+        <div className="w-full sm:w-64">
+          <Input
+            placeholder="Search events, clients, venues..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            icon={<Search className="w-3.5 h-3.5" />}
+          />
         </div>
       </div>
 
       {/* Events Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredEvents.map((evt) => {
-          const budgetPercent = Math.min(100, Math.round((evt.actualSpend / (evt.budget || 1)) * 100));
+          const budgetPercentage = Math.min(
+            100,
+            Math.round((evt.actualSpend / (evt.budget || 1)) * 100)
+          );
 
           return (
-            <div
-              key={evt.id}
-              className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg transition-all group flex flex-col"
-            >
-              {/* Event Cover Image */}
-              <div className="h-44 relative overflow-hidden bg-slate-900">
+            <Card key={evt.id} className="overflow-hidden flex flex-col group">
+              {/* Event Image Banner */}
+              <div className="relative h-44 w-full bg-zinc-100 overflow-hidden border-b border-zinc-100">
                 <img
                   src={evt.coverImage}
                   alt={evt.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                  className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
                 <div className="absolute top-3 left-3">
-                  <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border backdrop-blur-md ${statusColors[evt.status]}`}>
-                    {evt.status.replace('_', ' ')}
-                  </span>
+                  {getStatusBadge(evt.status)}
                 </div>
-
                 <div className="absolute top-3 right-3">
-                  <span className="text-[10px] font-mono font-bold bg-black/60 text-white px-2 py-0.5 rounded backdrop-blur-md">
-                    {evt.code}
+                  <span className="text-[10px] font-mono uppercase px-2 py-1 rounded bg-zinc-950/75 text-white backdrop-blur-xs">
+                    {evt.eventType}
                   </span>
                 </div>
-
-                <div className="absolute bottom-3 left-3 right-3 text-white">
-                  <span className="text-[11px] font-semibold text-indigo-300 uppercase tracking-wider">{evt.eventType}</span>
-                  <h3 className="text-sm font-bold truncate leading-snug">{evt.title}</h3>
-                </div>
               </div>
 
-              {/* Card Body */}
-              <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                <div className="space-y-2 text-xs">
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <MapPin className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span className="truncate">{evt.venueName}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <CalendarDays className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-                    <span>{evt.startDate} &rarr; {evt.endDate}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-slate-600 pt-1">
-                    <span className="flex items-center gap-1.5">
-                      <Users className="w-3.5 h-3.5 text-indigo-600" />
-                      <span>{evt.guestCount} Guests</span>
-                    </span>
-                    <span className="font-medium text-slate-700">Client: {evt.clientName}</span>
+              {/* Event Details Content */}
+              <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-4">
+                <div className="space-y-2">
+                  <Link href={`/events/${evt.id}`}>
+                    <h3 className="text-sm font-semibold text-zinc-900 group-hover:text-zinc-700 transition-colors tracking-tight line-clamp-1">
+                      {evt.title}
+                    </h3>
+                  </Link>
+                  <p className="text-xs text-zinc-500 font-medium">{evt.clientName}</p>
+
+                  <div className="space-y-1.5 text-xs text-zinc-500 pt-1">
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <span className="truncate">{evt.venueName}</span>
+                    </div>
+                    <div className="flex items-center gap-2 font-mono text-[11px]">
+                      <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <span>{evt.startDate} to {evt.endDate}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                      <span>{evt.guestCount} expected guests</span>
+                    </div>
                   </div>
                 </div>
 
-                {/* Budget Utilization bar */}
-                <div className="pt-3 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-slate-500">Budget Spent:</span>
-                    <span className="font-bold text-slate-900">
-                      ₹{(evt.actualSpend / 100000).toFixed(1)}L / ₹{(evt.budget / 100000).toFixed(1)}L ({budgetPercent}%)
+                {/* Budget Meter */}
+                <div className="pt-2 border-t border-zinc-100 space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="text-zinc-500 text-[11px]">Budget Utilized</span>
+                    <span className="font-mono font-medium text-zinc-900 text-[11px]">
+                      ₹{(evt.actualSpend).toLocaleString()} / ₹{(evt.budget).toLocaleString()}
                     </span>
                   </div>
-                  <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                     <div
-                      className={`h-full rounded-full transition-all ${
-                        budgetPercent > 90 ? 'bg-rose-500' : 'bg-indigo-600'
+                      className={`h-full rounded-full ${
+                        budgetPercentage > 90 ? 'bg-rose-500' : 'bg-zinc-900'
                       }`}
-                      style={{ width: `${budgetPercent}%` }}
-                    ></div>
+                      style={{ width: `${budgetPercentage}%` }}
+                    />
                   </div>
                 </div>
 
-                {/* Card Action Link */}
-                <Link
-                  href={`/events/${evt.id}`}
-                  className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2"
-                >
-                  <span>Open Run of Show & Operations</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            </div>
+                {/* Action Footer */}
+                <div className="pt-2 flex items-center justify-between border-t border-zinc-100">
+                  <span className="text-[11px] text-zinc-400">
+                    Lead: {evt.managerName}
+                  </span>
+                  <Link href={`/events/${evt.id}`}>
+                    <Button variant="ghost" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />}>
+                      Run of Show
+                    </Button>
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
           );
         })}
       </div>
 
-      {/* Modal: New Event Production */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
-            <h2 className="text-lg font-bold text-slate-900">Create Event Production</h2>
-            <p className="text-xs text-slate-500 mt-0.5">Initialize budget, venue selection, and staging itinerary</p>
+      {/* Create Event Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Create New Production"
+        description="Initialize an enterprise event with venue, client, budget, and staging assignments."
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleCreateEvent}>
+              Confirm Production
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateEvent} className="space-y-4">
+          <Input
+            label="Event Production Title"
+            required
+            placeholder="e.g. Oberoi Heritage Sangeet & Reception"
+            value={formData.title}
+            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+          />
 
-            <form onSubmit={handleCreateEvent} className="space-y-4 mt-5">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Production Title *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Royal Sangeet & Reception Gala"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                />
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Event Type"
+              value={formData.eventType}
+              onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+            >
+              <option value="Luxury Wedding">Luxury Wedding</option>
+              <option value="Corporate Summit">Corporate Summit</option>
+              <option value="Music Concert">Music Concert</option>
+              <option value="Award Gala">Award Gala</option>
+              <option value="Brand Launch">Brand Launch</option>
+            </Select>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Event Type</label>
-                  <select
-                    value={formData.eventType}
-                    onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
-                    className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                  >
-                    <option value="Luxury Wedding">Luxury Wedding</option>
-                    <option value="Corporate Summit">Corporate Summit</option>
-                    <option value="Live Concert">Live Concert / Music Festival</option>
-                    <option value="Milestone Gala">Milestone Gala</option>
-                    <option value="Product Launch">Product Launch</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Client Profile *</label>
-                  <select
-                    value={formData.clientName}
-                    onChange={(e) => {
-                      const selected = clients.find(c => c.name === e.target.value);
-                      setFormData({
-                        ...formData,
-                        clientName: e.target.value,
-                        clientId: selected?.id || 'c-1'
-                      });
-                    }}
-                    className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                  >
-                    {clients.map(c => (
-                      <option key={c.id} value={c.name}>{c.name} ({c.companyName || 'Private'})</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Venue Assignment</label>
-                <select
-                  value={formData.venueName}
-                  onChange={(e) => {
-                    const selected = venues.find(v => v.name === e.target.value);
-                    setFormData({
-                      ...formData,
-                      venueName: e.target.value,
-                      venueId: selected?.id || 'v-1'
-                    });
-                  }}
-                  className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                >
-                  {venues.map(v => (
-                    <option key={v.id} value={v.name}>{v.name} ({v.city})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">End Date</label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Estimated Budget (₹)</label>
-                  <input
-                    type="number"
-                    value={formData.budget}
-                    onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Guest Headcount</label>
-                  <input
-                    type="number"
-                    value={formData.guestCount}
-                    onChange={(e) => setFormData({ ...formData, guestCount: Number(e.target.value) })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Cover Image URL</label>
-                <input
-                  type="text"
-                  value={formData.coverImage}
-                  onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md"
-                >
-                  Create Production
-                </button>
-              </div>
-            </form>
+            <Select
+              label="Primary Client"
+              value={formData.clientId}
+              onChange={(e) => {
+                const c = clients.find(cl => cl.id === e.target.value);
+                setFormData({
+                  ...formData,
+                  clientId: e.target.value,
+                  clientName: c?.name || ''
+                });
+              }}
+            >
+              {clients.map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.companyName || c.city})</option>
+              ))}
+            </Select>
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Select
+              label="Venue Location"
+              value={formData.venueId}
+              onChange={(e) => {
+                const v = venues.find(vn => vn.id === e.target.value);
+                setFormData({
+                  ...formData,
+                  venueId: e.target.value,
+                  venueName: v?.name || ''
+                });
+              }}
+            >
+              {venues.map(v => (
+                <option key={v.id} value={v.id}>{v.name} ({v.city})</option>
+              ))}
+            </Select>
+
+            <Input
+              label="Production Lead Manager"
+              value={formData.managerName}
+              onChange={(e) => setFormData({ ...formData, managerName: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <Input
+              label="Start Date"
+              type="date"
+              value={formData.startDate}
+              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+            />
+            <Input
+              label="End Date"
+              type="date"
+              value={formData.endDate}
+              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+            />
+            <Input
+              label="Expected Guests"
+              type="number"
+              value={formData.guestCount}
+              onChange={(e) => setFormData({ ...formData, guestCount: Number(e.target.value) })}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Input
+              label="Estimated Budget (₹)"
+              type="number"
+              value={formData.budget}
+              onChange={(e) => setFormData({ ...formData, budget: Number(e.target.value) })}
+            />
+            <Input
+              label="Cover Image URL"
+              value={formData.coverImage}
+              onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
+            />
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

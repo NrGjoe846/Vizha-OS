@@ -7,14 +7,21 @@ import {
   Plus,
   Users,
   Star,
-  CheckCircle2,
   Phone,
-  Sparkles
+  Search,
+  CheckCircle2
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input, Select } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 
 export default function VenuesPage() {
   const { venues, addVenue } = useERP();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     name: '',
@@ -37,200 +44,184 @@ export default function VenuesPage() {
     setIsModalOpen(false);
   };
 
+  const filteredVenues = venues.filter(v =>
+    v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    v.type.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Page Header */}
+      <PageHeader
+        title="Partner Venues"
+        description="Curated luxury hotel ballrooms, convention centers, palace grounds, and oceanfront resorts."
+        badge={
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+            {venues.length} Locations
+          </span>
+        }
+        actions={
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Partner Venues & Locations</h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-              {venues.length} Curated Venues
-            </span>
+            <div className="w-52">
+              <Input
+                placeholder="Search venues..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<Search className="w-3.5 h-3.5" />}
+              />
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Add Venue
+            </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Palace grounds, convention centers, luxury ballrooms, and oceanfront resorts with technical capacities.
-          </p>
-        </div>
-
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Partner Venue</span>
-        </button>
-      </div>
+        }
+      />
 
       {/* Venues Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {venues.map((v) => (
-          <div
-            key={v.id}
-            className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-xs hover:shadow-lg transition-all flex flex-col group"
-          >
-            <div className="h-48 relative overflow-hidden bg-slate-900">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {filteredVenues.map((v) => (
+          <Card key={v.id} className="overflow-hidden flex flex-col group">
+            {/* Venue Image */}
+            <div className="relative h-48 w-full bg-zinc-100 overflow-hidden border-b border-zinc-100">
               <img
                 src={v.imageUrl}
                 alt={v.name}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 opacity-90"
+                className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-
-              <div className="absolute top-3 left-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-md">
+              <div className="absolute top-3 left-3 flex items-center gap-2">
+                <Badge variant={v.isAvailable ? 'success' : 'neutral'} dot>
+                  {v.isAvailable ? 'Available' : 'Booked'}
+                </Badge>
+                <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded bg-zinc-950/70 text-white backdrop-blur-xs">
                   {v.type}
                 </span>
               </div>
-
-              <div className="absolute top-3 right-3 flex items-center gap-1 bg-amber-500 text-slate-950 px-2 py-0.5 rounded font-bold text-xs">
-                <Star className="w-3.5 h-3.5 fill-current" />
+              <div className="absolute top-3 right-3 flex items-center gap-1 bg-white/90 backdrop-blur-xs px-2 py-0.5 rounded text-xs font-semibold text-zinc-900 border border-zinc-200">
+                <Star className="w-3 h-3 text-amber-500 fill-amber-500" />
                 <span>{v.rating}</span>
               </div>
-
-              <div className="absolute bottom-3 left-4 right-4 text-white">
-                <h3 className="text-base font-bold truncate">{v.name}</h3>
-                <p className="text-xs text-slate-300 flex items-center gap-1 mt-0.5">
-                  <MapPin className="w-3 h-3 text-indigo-400 shrink-0" />
-                  <span>{v.address}</span>
-                </p>
-              </div>
             </div>
 
-            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-              <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 font-semibold text-slate-700">
-                  <Users className="w-4 h-4 text-indigo-600" />
-                  <span>Capacity: {v.capacity.toLocaleString()} Pax</span>
+            {/* Venue Details */}
+            <CardContent className="p-4 flex-1 flex flex-col justify-between space-y-4">
+              <div className="space-y-2">
+                <div>
+                  <h3 className="text-sm font-semibold text-zinc-950 tracking-tight">{v.name}</h3>
+                  <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5">
+                    <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                    <span>{v.address}, {v.city}</span>
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {v.amenities.map((amenity, i) => (
+                    <span
+                      key={i}
+                      className="text-[10px] px-2 py-0.5 rounded bg-zinc-50 text-zinc-600 border border-zinc-200/60"
+                    >
+                      {amenity}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Price & Capacity Strip */}
+              <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+                <div>
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Max Capacity</span>
+                  <p className="font-mono font-medium text-zinc-800">{v.capacity.toLocaleString()} Guests</p>
                 </div>
                 <div className="text-right">
-                  <span className="text-[10px] text-slate-400">Day Rental:</span>
-                  <p className="font-extrabold text-sm text-indigo-700">₹{v.rentalRate.toLocaleString('en-IN')}</p>
+                  <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Rental Rate</span>
+                  <p className="font-mono font-semibold text-zinc-950">₹{(v.rentalRate).toLocaleString()} / day</p>
                 </div>
               </div>
-
-              <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100">
-                {v.amenities.map((amenity, idx) => (
-                  <span
-                    key={idx}
-                    className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600"
-                  >
-                    {amenity}
-                  </span>
-                ))}
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Contact: {v.contactName}</span>
-                <span className="font-mono">{v.contactPhone}</span>
-              </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      {/* Modal: Add Venue */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <h2 className="text-base font-bold text-slate-900">Add Partner Venue</h2>
+      {/* Add Venue Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add Partner Venue"
+        description="Register a new venue location and operational specifications."
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleCreate}>
+              Save Venue
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreate} className="space-y-3.5">
+          <Input
+            label="Venue Name"
+            required
+            placeholder="e.g. The Taj Mahal Palace, Mumbai"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
 
-            <form onSubmit={handleCreate} className="space-y-3.5 mt-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Venue Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Taj Falaknuma Palace Lawns"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Venue Type"
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            >
+              <option value="Luxury Hotel Ballroom">Luxury Hotel Ballroom</option>
+              <option value="Heritage Palace">Heritage Palace</option>
+              <option value="Convention Center">Convention Center</option>
+              <option value="Beachside Resort">Beachside Resort</option>
+              <option value="Open Air Arena">Open Air Arena</option>
+            </Select>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Venue Type</label>
-                  <input
-                    type="text"
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">City</label>
-                  <input
-                    type="text"
-                    value={formData.city}
-                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Full Address</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Street, District, Pincode"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Max Capacity (Pax)</label>
-                  <input
-                    type="number"
-                    value={formData.capacity}
-                    onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Daily Rental (₹)</label>
-                  <input
-                    type="number"
-                    value={formData.rentalRate}
-                    onChange={(e) => setFormData({ ...formData, rentalRate: Number(e.target.value) })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Image URL</label>
-                <input
-                  type="text"
-                  value={formData.imageUrl}
-                  onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md"
-                >
-                  Save Venue
-                </button>
-              </div>
-            </form>
+            <Input
+              label="City"
+              value={formData.city}
+              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+            />
           </div>
-        </div>
-      )}
+
+          <Input
+            label="Street Address"
+            placeholder="Apollo Bunder, Colaba"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          />
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Guest Capacity"
+              type="number"
+              value={formData.capacity}
+              onChange={(e) => setFormData({ ...formData, capacity: Number(e.target.value) })}
+            />
+            <Input
+              label="Daily Rental Rate (₹)"
+              type="number"
+              value={formData.rentalRate}
+              onChange={(e) => setFormData({ ...formData, rentalRate: Number(e.target.value) })}
+            />
+          </div>
+
+          <Input
+            label="Photo URL"
+            value={formData.imageUrl}
+            onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
+          />
+        </form>
+      </Modal>
     </div>
   );
 }

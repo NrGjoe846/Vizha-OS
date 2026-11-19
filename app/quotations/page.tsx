@@ -3,20 +3,29 @@
 import React, { useState } from 'react';
 import { useERP } from '@/lib/store';
 import {
-  FileSpreadsheet,
+  FileText,
   Plus,
   Printer,
-  Sparkles,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ArrowRight
+  Check,
+  X,
+  Search,
+  Eye,
+  Download,
+  Calendar,
+  Building
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input, Select } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
 
 export default function QuotationsPage() {
   const { quotations, addQuotation, updateQuotationStatus, clients, events } = useERP();
   const [selectedQuotation, setSelectedQuotation] = useState<any | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [formData, setFormData] = useState({
     clientName: clients[0]?.name || 'Rahul Oberoi',
@@ -54,263 +63,312 @@ export default function QuotationsPage() {
     setIsCreateModalOpen(false);
   };
 
+  const filteredQuotations = quotations.filter(q =>
+    q.quotationNo.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    q.clientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    q.eventTitle.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 no-print">
-        <div>
+      {/* Page Header */}
+      <PageHeader
+        title="Proposals & Quotations"
+        description="Itemized commercial scopes of work, 18% GST calculations, client approval tracking, and printable estimates."
+        badge={
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+            {quotations.length} Quotations
+          </span>
+        }
+        actions={
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Proposals & Quotations</h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-              {quotations.length} Proposals
-            </span>
+            <div className="w-52">
+              <Input
+                placeholder="Search quotations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<Search className="w-3.5 h-3.5" />}
+              />
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              New Proposal
+            </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Build itemized event proposals, calculate 18% GST deliverables, and export printable scopes of work.
-          </p>
-        </div>
+        }
+      />
 
-        <button
-          onClick={() => setIsCreateModalOpen(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>New Quotation</span>
-        </button>
-      </div>
-
-      {/* Printable Preview */}
-      {selectedQuotation && (
-        <div className="bg-white rounded-2xl border-2 border-indigo-200 p-8 shadow-xl relative animate-in fade-in duration-200 print-card">
-          <div className="flex items-center justify-between pb-6 border-b border-slate-200">
-            <div>
-              <span className="text-lg font-black tracking-tight text-slate-900">EventFlow ERP &bull; Event Proposal</span>
-              <p className="text-xs text-slate-500 mt-1">Comprehensive production quotation with 18% GST estimate</p>
-            </div>
-            <div className="flex items-center gap-2 no-print">
-              <button
-                onClick={() => window.print()}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-bold flex items-center gap-1.5"
-              >
-                <Printer className="w-3.5 h-3.5" />
-                <span>Print Proposal</span>
-              </button>
-              <button
-                onClick={() => setSelectedQuotation(null)}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-semibold"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-8 my-6 text-xs">
-            <div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">PROPOSAL FOR:</p>
-              <h4 className="text-sm font-bold text-slate-900 mt-1">{selectedQuotation.clientName}</h4>
-              <p className="text-slate-600">{selectedQuotation.clientEmail}</p>
-              <p className="text-slate-800 font-semibold mt-2">Production: {selectedQuotation.eventTitle}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">QUOTATION REF:</p>
-              <h4 className="text-sm font-mono font-extrabold text-indigo-700 mt-1">{selectedQuotation.quotationNo}</h4>
-              <p className="text-slate-600 mt-0.5">Issue Date: {selectedQuotation.issueDate}</p>
-              <p className="text-slate-600">Valid Until: {selectedQuotation.validUntil}</p>
-            </div>
-          </div>
-
-          <table className="w-full text-xs text-left my-6 border border-slate-200">
-            <thead className="bg-slate-50 border-b border-slate-200 font-semibold text-slate-600 text-[10px] uppercase">
-              <tr>
-                <th className="py-2.5 px-3">Scope Item Description</th>
-                <th className="py-2.5 px-3 text-center">Qty</th>
-                <th className="py-2.5 px-3 text-right">Unit Rate (₹)</th>
-                <th className="py-2.5 px-3 text-right">Amount (₹)</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {selectedQuotation.items.map((item: any, i: number) => (
-                <tr key={i}>
-                  <td className="py-3 px-3 font-medium text-slate-900">{item.description}</td>
-                  <td className="py-3 px-3 text-center font-mono">{item.quantity}</td>
-                  <td className="py-3 px-3 text-right font-mono">₹{item.unitPrice.toLocaleString('en-IN')}</td>
-                  <td className="py-3 px-3 text-right font-bold text-slate-900 font-mono">
-                    ₹{item.amount.toLocaleString('en-IN')}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="flex justify-end my-6 text-xs">
-            <div className="w-72 space-y-2">
-              <div className="flex justify-between text-slate-600">
-                <span>Scope Deliverables Subtotal:</span>
-                <span className="font-mono font-semibold">₹{selectedQuotation.subtotal.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-emerald-700 font-semibold">
-                <span>Client Discount Applied:</span>
-                <span className="font-mono">-₹{selectedQuotation.discount.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-slate-600">
-                <span>GST (18% Applicable):</span>
-                <span className="font-mono">₹{selectedQuotation.taxAmount.toLocaleString('en-IN')}</span>
-              </div>
-              <div className="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-200">
-                <span>Grand Total Estimate:</span>
-                <span className="font-mono text-indigo-700">₹{selectedQuotation.totalAmount.toLocaleString('en-IN')}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Quotation Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden no-print">
+      {/* Quotations Table */}
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200/80 text-zinc-500 font-mono uppercase text-[10px] tracking-wider">
               <tr>
                 <th className="py-3 px-4">Quotation #</th>
-                <th className="py-3 px-4">Client</th>
-                <th className="py-3 px-4">Event Target</th>
-                <th className="py-3 px-4 text-right">Taxable Subtotal</th>
-                <th className="py-3 px-4 text-right">Estimate (18% GST)</th>
+                <th className="py-3 px-4">Client & Event</th>
+                <th className="py-3 px-4">Date Issued</th>
+                <th className="py-3 px-4">Subtotal</th>
+                <th className="py-3 px-4">18% GST</th>
+                <th className="py-3 px-4">Total Amount</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4 text-center">Actions</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {quotations.map((q) => (
-                <tr key={q.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-3.5 px-4 font-mono font-bold text-indigo-700">{q.quotationNo}</td>
-                  <td className="py-3.5 px-4">
-                    <p className="font-semibold text-slate-900">{q.clientName}</p>
-                    <p className="text-[10px] text-slate-400">{q.clientEmail}</p>
+            <tbody className="divide-y divide-zinc-100 text-zinc-700">
+              {filteredQuotations.map((q) => (
+                <tr key={q.id} className="hover:bg-zinc-50/60 transition-colors">
+                  <td className="py-3 px-4 font-mono font-medium text-zinc-900">{q.quotationNo}</td>
+                  <td className="py-3 px-4">
+                    <p className="font-semibold text-zinc-900">{q.clientName}</p>
+                    <p className="text-[11px] text-zinc-500 truncate max-w-xs">{q.eventTitle}</p>
                   </td>
-                  <td className="py-3.5 px-4 text-slate-700 font-medium truncate max-w-[200px]">{q.eventTitle}</td>
-                  <td className="py-3.5 px-4 text-right font-mono text-slate-600">₹{q.subtotal.toLocaleString('en-IN')}</td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-900">₹{q.totalAmount.toLocaleString('en-IN')}</td>
-                  <td className="py-3.5 px-4">
-                    <select
-                      value={q.status}
-                      onChange={(e) => updateQuotationStatus(q.id, e.target.value as any)}
-                      className="text-[10px] font-bold uppercase rounded px-2 py-0.5 border border-slate-200 bg-slate-50 text-slate-700"
+                  <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">{q.issueDate}</td>
+                  <td className="py-3 px-4 font-mono text-zinc-600">₹{(q.subtotal).toLocaleString()}</td>
+                  <td className="py-3 px-4 font-mono text-zinc-500 text-[11px]">₹{(q.taxAmount).toLocaleString()}</td>
+                  <td className="py-3 px-4 font-mono font-semibold text-zinc-950">₹{(q.totalAmount).toLocaleString()}</td>
+                  <td className="py-3 px-4">
+                    <Badge
+                      variant={
+                        q.status === 'approved'
+                          ? 'success'
+                          : q.status === 'sent'
+                          ? 'info'
+                          : q.status === 'rejected'
+                          ? 'danger'
+                          : 'neutral'
+                      }
+                      dot
                     >
-                      <option value="draft">Draft</option>
-                      <option value="sent">Sent</option>
-                      <option value="approved">Approved</option>
-                      <option value="rejected">Rejected</option>
-                    </select>
+                      {q.status}
+                    </Badge>
                   </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <button
+                  <td className="py-3 px-4 text-right space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => setSelectedQuotation(q)}
-                      className="px-3 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded text-[11px] font-semibold transition-colors"
+                      icon={<Eye className="w-3.5 h-3.5" />}
                     >
-                      Preview / Print
-                    </button>
+                      View
+                    </Button>
+
+                    {q.status === 'draft' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateQuotationStatus(q.id, 'sent')}
+                      >
+                        Send
+                      </Button>
+                    )}
+                    {q.status === 'sent' && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={() => updateQuotationStatus(q.id, 'approved')}
+                      >
+                        Approve
+                      </Button>
+                    )}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {/* Modal: Create Quotation */}
-      {isCreateModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-lg w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <h2 className="text-base font-bold text-slate-900">Create Production Quotation</h2>
-
-            <form onSubmit={handleCreate} className="space-y-3.5 mt-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Client Profile</label>
-                  <select
-                    value={formData.clientName}
-                    onChange={(e) => {
-                      const sel = clients.find(c => c.name === e.target.value);
-                      setFormData({
-                        ...formData,
-                        clientName: e.target.value,
-                        clientEmail: sel?.email || ''
-                      });
-                    }}
-                    className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                  >
-                    {clients.map(c => (
-                      <option key={c.id} value={c.name}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Target Event</label>
-                  <select
-                    value={formData.eventTitle}
-                    onChange={(e) => setFormData({ ...formData, eventTitle: e.target.value })}
-                    className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                  >
-                    {events.map(ev => (
-                      <option key={ev.id} value={ev.title}>{ev.title}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
+      {/* Quotation Detail / Print View Modal */}
+      {selectedQuotation && (
+        <Modal
+          isOpen={!!selectedQuotation}
+          onClose={() => setSelectedQuotation(null)}
+          title={`Quotation ${selectedQuotation.quotationNo}`}
+          description={`Issued to ${selectedQuotation.clientName} for ${selectedQuotation.eventTitle}`}
+          maxWidth="2xl"
+          footer={
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.print()}
+                icon={<Printer className="w-3.5 h-3.5" />}
+              >
+                Print / PDF
+              </Button>
+              <Button variant="primary" size="sm" onClick={() => setSelectedQuotation(null)}>
+                Close
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-5 text-xs text-zinc-800">
+            <div className="flex justify-between items-start pb-4 border-b border-zinc-100">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Taxable Subtotal (₹)</label>
-                <input
-                  type="number"
-                  value={formData.subtotal}
-                  onChange={(e) => {
-                    const sub = Number(e.target.value);
-                    const tax = Math.round(sub * 0.18);
-                    setFormData({
-                      ...formData,
-                      subtotal: sub,
-                      taxAmount: tax,
-                      totalAmount: sub + tax - formData.discount,
-                      items: [
-                        {
-                          id: '1',
-                          description: 'Event Scope Deliverables & Fabrication',
-                          quantity: 1,
-                          unitPrice: sub,
-                          amount: sub
-                        }
-                      ]
-                    });
-                  }}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
+                <span className="text-[10px] font-mono uppercase text-zinc-400">Client Info</span>
+                <p className="font-semibold text-zinc-900 text-sm mt-0.5">{selectedQuotation.clientName}</p>
+                <p className="text-zinc-500">{selectedQuotation.clientEmail}</p>
               </div>
+              <div className="text-right">
+                <span className="text-[10px] font-mono uppercase text-zinc-400">Validity</span>
+                <p className="font-mono text-zinc-900 mt-0.5">Valid Until: {selectedQuotation.validUntil}</p>
+                <p className="text-zinc-500">Date: {selectedQuotation.issueDate}</p>
+              </div>
+            </div>
 
-              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs flex items-center justify-between">
-                <span>18% GST Estimate:</span>
-                <span className="font-mono font-bold text-slate-900">₹{formData.taxAmount.toLocaleString('en-IN')}</span>
-              </div>
+            {/* Scope Items */}
+            <div className="border border-zinc-200/80 rounded-lg overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-zinc-50 border-b border-zinc-200/60 font-mono text-[10px] uppercase text-zinc-500">
+                  <tr>
+                    <th className="p-2.5">Scope Description</th>
+                    <th className="p-2.5 text-center">Qty</th>
+                    <th className="p-2.5 text-right">Unit Price</th>
+                    <th className="p-2.5 text-right">Amount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-100">
+                  {selectedQuotation.items.map((item: any, i: number) => (
+                    <tr key={i}>
+                      <td className="p-2.5 text-zinc-900">{item.description}</td>
+                      <td className="p-2.5 text-center font-mono">{item.quantity}</td>
+                      <td className="p-2.5 text-right font-mono">₹{item.unitPrice.toLocaleString()}</td>
+                      <td className="p-2.5 text-right font-mono font-medium text-zinc-900">₹{item.amount.toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md"
-                >
-                  Generate Proposal
-                </button>
+            {/* Total Math Breakdown */}
+            <div className="flex justify-end">
+              <div className="w-64 space-y-1.5 font-mono text-xs">
+                <div className="flex justify-between text-zinc-500">
+                  <span>Subtotal:</span>
+                  <span>₹{selectedQuotation.subtotal.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-zinc-500">
+                  <span>18% GST:</span>
+                  <span>₹{selectedQuotation.taxAmount.toLocaleString()}</span>
+                </div>
+                {selectedQuotation.discount > 0 && (
+                  <div className="flex justify-between text-rose-600">
+                    <span>Discount:</span>
+                    <span>-₹{selectedQuotation.discount.toLocaleString()}</span>
+                  </div>
+                )}
+                <div className="flex justify-between font-bold text-zinc-950 pt-2 border-t border-zinc-200 text-sm">
+                  <span>Grand Total:</span>
+                  <span>₹{selectedQuotation.totalAmount.toLocaleString()}</span>
+                </div>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
+        </Modal>
       )}
+
+      {/* New Proposal Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Draft Commercial Proposal"
+        description="Compose an itemized quotation with 18% GST calculation."
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setIsCreateModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleCreate}>
+              Save Proposal
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreate} className="space-y-3.5">
+          <div className="grid grid-cols-2 gap-3">
+            <Select
+              label="Select Client"
+              value={formData.clientName}
+              onChange={(e) => {
+                const c = clients.find(cl => cl.name === e.target.value);
+                setFormData({
+                  ...formData,
+                  clientName: e.target.value,
+                  clientEmail: c?.email || ''
+                });
+              }}
+            >
+              {clients.map(c => (
+                <option key={c.id} value={c.name}>{c.name}</option>
+              ))}
+            </Select>
+
+            <Select
+              label="Associated Production Event"
+              value={formData.eventTitle}
+              onChange={(e) => setFormData({ ...formData, eventTitle: e.target.value })}
+            >
+              {events.map(ev => (
+                <option key={ev.id} value={ev.title}>{ev.title}</option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Issue Date"
+              type="date"
+              value={formData.issueDate}
+              onChange={(e) => setFormData({ ...formData, issueDate: e.target.value })}
+            />
+            <Input
+              label="Validity Expiry"
+              type="date"
+              value={formData.validUntil}
+              onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
+            />
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <Input
+              label="Subtotal (₹)"
+              type="number"
+              value={formData.subtotal}
+              onChange={(e) => {
+                const sub = Number(e.target.value);
+                const tax = Math.round(sub * 0.18);
+                const total = sub + tax - formData.discount;
+                setFormData({ ...formData, subtotal: sub, taxAmount: tax, totalAmount: total });
+              }}
+            />
+            <Input
+              label="GST (18%)"
+              type="number"
+              disabled
+              value={formData.taxAmount}
+            />
+            <Input
+              label="Discount (₹)"
+              type="number"
+              value={formData.discount}
+              onChange={(e) => {
+                const disc = Number(e.target.value);
+                const total = formData.subtotal + formData.taxAmount - disc;
+                setFormData({ ...formData, discount: disc, totalAmount: total });
+              }}
+            />
+          </div>
+
+          <div className="p-3 bg-zinc-50 border border-zinc-200/60 rounded-lg flex items-center justify-between font-mono text-xs">
+            <span className="font-semibold text-zinc-900">Calculated Total:</span>
+            <span className="font-bold text-zinc-950 text-sm">₹{formData.totalAmount.toLocaleString()}</span>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

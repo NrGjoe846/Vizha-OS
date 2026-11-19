@@ -7,19 +7,18 @@ import { useERP } from '@/lib/store';
 import {
   LayoutDashboard,
   Kanban,
-  CalendarDays,
+  Calendar,
   Users,
   MapPin,
   Truck,
-  FileSpreadsheet,
+  FileText,
   Receipt,
-  Wallet,
-  Boxes,
-  UserCheck2,
+  CreditCard,
+  Package,
+  UserCheck,
   QrCode,
-  BarChart3,
+  BarChart2,
   ExternalLink,
-  ShieldAlert,
   ChevronRight
 } from 'lucide-react';
 
@@ -47,45 +46,45 @@ export function Sidebar() {
 
   const sections: NavSection[] = [
     {
-      title: 'CORE ERP',
+      title: 'Platform',
       items: [
-        { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-        { label: 'Analytics & Reports', href: '/reports', icon: BarChart3 },
+        { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
+        { label: 'Analytics', href: '/reports', icon: BarChart2 },
       ]
     },
     {
-      title: 'CRM & CLIENTS',
+      title: 'Sales & CRM',
       items: [
-        { label: 'CRM Leads Pipeline', href: '/leads', icon: Kanban, badge: pendingLeadsCount },
-        { label: 'Clients Directory', href: '/clients', icon: Users },
-        { label: 'Proposals & Quotations', href: '/quotations', icon: FileSpreadsheet },
+        { label: 'Leads Pipeline', href: '/leads', icon: Kanban, badge: pendingLeadsCount },
+        { label: 'Clients', href: '/clients', icon: Users },
+        { label: 'Quotations', href: '/quotations', icon: FileText },
       ]
     },
     {
-      title: 'OPERATIONS & STAGING',
+      title: 'Productions',
       items: [
-        { label: 'Events & Run of Show', href: '/events', icon: CalendarDays, badge: activeEventsCount },
-        { label: 'Partner Venues', href: '/venues', icon: MapPin },
-        { label: 'Vendors & Suppliers', href: '/vendors', icon: Truck },
-        { label: 'Inventory & AV Gear', href: '/inventory', icon: Boxes },
+        { label: 'Events & Run of Show', href: '/events', icon: Calendar, badge: activeEventsCount },
+        { label: 'Venues', href: '/venues', icon: MapPin },
+        { label: 'Vendors', href: '/vendors', icon: Truck },
+        { label: 'Inventory Fleet', href: '/inventory', icon: Package },
       ]
     },
     {
-      title: 'GATE & GUEST LOGISTICS',
+      title: 'Gate & Admissions',
       items: [
-        { label: 'Guests & RSVPs', href: '/guests', icon: UserCheck2 },
-        { label: 'Ticketing & QR Scanner', href: '/tickets', icon: QrCode, highlight: true },
+        { label: 'Guest List & RSVP', href: '/guests', icon: UserCheck },
+        { label: 'Tickets & QR Scanner', href: '/tickets', icon: QrCode, highlight: true },
       ]
     },
     {
-      title: 'FINANCE & BILLING',
+      title: 'Finance',
       items: [
-        { label: 'Invoices & GST Billing', href: '/invoices', icon: Receipt, badge: unpaidInvoicesCount },
-        { label: 'Budgets & Expenses', href: '/expenses', icon: Wallet },
+        { label: 'Invoices & GST', href: '/invoices', icon: Receipt, badge: unpaidInvoicesCount },
+        { label: 'Expenses', href: '/expenses', icon: CreditCard },
       ]
     },
     {
-      title: 'EXTERNAL PORTALS',
+      title: 'Portals',
       items: [
         { label: 'Client Portal', href: '/portal/client', icon: ExternalLink, external: true },
         { label: 'Vendor Portal', href: '/portal/vendor', icon: ExternalLink, external: true },
@@ -94,11 +93,11 @@ export function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 text-slate-300 flex flex-col shrink-0 min-h-[calc(100vh-4rem)] border-r border-slate-800 no-print">
-      <div className="flex-1 py-4 px-3 space-y-6 overflow-y-auto">
+    <aside className="w-60 bg-white border-r border-zinc-200/80 flex flex-col shrink-0 min-h-[calc(100vh-3.5rem)] no-print">
+      <div className="flex-1 py-4 px-3 space-y-5 overflow-y-auto">
         {sections.map((sec, idx) => (
           <div key={idx}>
-            <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+            <p className="px-2.5 text-[10px] font-mono font-medium uppercase tracking-wider text-zinc-400 mb-1.5">
               {sec.title}
             </p>
             <nav className="space-y-0.5">
@@ -110,31 +109,40 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
+                    className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all group ${
                       isActive
-                        ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/20'
-                        : item.highlight
-                        ? 'text-amber-300 hover:bg-slate-800/80 hover:text-amber-200'
-                        : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'
+                        ? 'bg-zinc-950 text-white shadow-2xs font-semibold'
+                        : 'text-zinc-600 hover:text-zinc-950 hover:bg-zinc-100/80'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : item.highlight ? 'text-amber-400' : 'text-slate-400 group-hover:text-slate-200'}`} />
+                      <Icon
+                        className={`w-4 h-4 shrink-0 transition-colors ${
+                          isActive
+                            ? 'text-white'
+                            : 'text-zinc-400 group-hover:text-zinc-700'
+                        }`}
+                        strokeWidth={1.75}
+                      />
                       <span className="truncate">{item.label}</span>
                     </div>
 
                     <div className="flex items-center gap-1.5 shrink-0">
                       {item.badge !== undefined && item.badge > 0 && (
                         <span
-                          className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                            isActive ? 'bg-indigo-700 text-white' : 'bg-slate-800 text-slate-300 border border-slate-700'
+                          className={`text-[10px] font-mono px-1.5 py-0.2 rounded font-medium ${
+                            isActive
+                              ? 'bg-zinc-800 text-zinc-300'
+                              : 'bg-zinc-100 text-zinc-600 border border-zinc-200/80'
                           }`}
                         >
                           {item.badge}
                         </span>
                       )}
                       {item.external && (
-                        <span className="text-[9px] px-1 py-0.2 rounded bg-slate-800 text-slate-400">Portal</span>
+                        <span className="text-[9px] font-mono uppercase px-1 py-0.2 rounded bg-zinc-100 text-zinc-500">
+                          Ext
+                        </span>
                       )}
                     </div>
                   </Link>
@@ -146,12 +154,12 @@ export function Sidebar() {
       </div>
 
       {/* Footer System Status */}
-      <div className="p-3 bg-slate-950/60 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+      <div className="p-3 bg-zinc-50/70 border-t border-zinc-200/80 text-[11px] text-zinc-500 flex items-center justify-between font-mono">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          <span>Prisma + Supabase v2</span>
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          <span className="text-[10px]">Supabase &bull; Connected</span>
         </div>
-        <span className="text-[10px] text-slate-500 font-mono">v2.0.0</span>
+        <span className="text-[10px] text-zinc-400">v2.0</span>
       </div>
     </aside>
   );

@@ -8,11 +8,17 @@ import {
   CheckCircle2,
   Clock,
   Search,
-  Filter,
-  UserCheck2,
-  Sparkles,
+  Check,
   Utensils
 } from 'lucide-react';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Input, Select } from '@/components/ui/Input';
+import { Modal } from '@/components/ui/Modal';
+import { Tabs } from '@/components/ui/Tabs';
+import { StatCard } from '@/components/ui/StatCard';
 
 export default function GuestsPage() {
   const { guests, addGuest, toggleGuestCheckIn, events } = useERP();
@@ -32,6 +38,17 @@ export default function GuestsPage() {
     dietaryPref: 'Jain Pure Vegetarian'
   });
 
+  const checkedInCount = guests.filter(g => g.isCheckedIn).length;
+  const checkInRate = guests.length > 0 ? Math.round((checkedInCount / guests.length) * 100) : 0;
+
+  const categories = [
+    { id: 'all', label: 'All Guests', count: guests.length },
+    { id: 'VIP', label: 'VIP' },
+    { id: 'Family', label: 'Family' },
+    { id: 'Corporate', label: 'Corporate' },
+    { id: 'Media', label: 'Media' },
+  ];
+
   const filteredGuests = guests.filter((g) => {
     const matchesGroup = filterGroup === 'all' || g.group === filterGroup;
     const matchesSearch =
@@ -40,9 +57,6 @@ export default function GuestsPage() {
       g.tableNo.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesGroup && matchesSearch;
   });
-
-  const checkedInCount = guests.filter(g => g.isCheckedIn).length;
-  const checkInRate = guests.length > 0 ? Math.round((checkedInCount / guests.length) * 100) : 0;
 
   const handleCreateGuest = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,250 +75,201 @@ export default function GuestsPage() {
     });
   };
 
-  const groupColors: Record<string, string> = {
-    VIP: 'bg-purple-100 text-purple-800 border-purple-200',
-    Family: 'bg-rose-100 text-rose-800 border-rose-200',
-    Corporate: 'bg-blue-100 text-blue-800 border-blue-200',
-    Media: 'bg-amber-100 text-amber-800 border-amber-200',
-    General: 'bg-slate-100 text-slate-800 border-slate-200'
-  };
-
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
+      {/* Page Header */}
+      <PageHeader
+        title="Guest List & RSVP"
+        description="Gate admission pass codes, VIP delegation seating tables, dietary requirements, and check-in tracking."
+        badge={
+          <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
+            {guests.length} Confirmed RSVPs
+          </span>
+        }
+        actions={
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Guests, RSVPs & Gate Check-in</h1>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800">
-              {guests.length} Registered Guests
-            </span>
+            <div className="w-52">
+              <Input
+                placeholder="Search guests by name or pass..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<Search className="w-3.5 h-3.5" />}
+              />
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setIsModalOpen(true)}
+              icon={<Plus className="w-3.5 h-3.5" />}
+            >
+              Add Guest RSVP
+            </Button>
           </div>
-          <p className="text-xs text-slate-500 mt-1">
-            Manage seating charts, dietary preferences, unique passcodes, and 1-click gate admission.
-          </p>
-        </div>
+        }
+      />
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-md shadow-indigo-200 transition-all flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Guest RSVP</span>
-        </button>
+      {/* Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <StatCard
+          label="Confirmed Guest RSVPs"
+          value={`${guests.length} Attendees`}
+          icon={<Users className="w-4 h-4" />}
+          description="Seating assigned across banquet tables"
+        />
+        <StatCard
+          label="Gate Check-in Progress"
+          value={`${checkInRate}%`}
+          change={`${checkedInCount} of ${guests.length} admitted`}
+          changeType="positive"
+          icon={<CheckCircle2 className="w-4 h-4" />}
+          description="Live barcode scanning at venue turnstiles"
+        />
       </div>
 
-      {/* Check-in Progress Bar */}
-      <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-xs flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="w-full md:w-1/2">
-          <div className="flex items-center justify-between text-xs mb-1.5">
-            <span className="font-bold text-slate-700">Live Turnstile Admission Rate</span>
-            <span className="font-bold text-indigo-700">{checkedInCount} / {guests.length} Admitted ({checkInRate}%)</span>
-          </div>
-          <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-gradient-to-r from-indigo-500 to-emerald-500 rounded-full transition-all duration-300"
-              style={{ width: `${checkInRate}%` }}
-            ></div>
-          </div>
-        </div>
+      {/* Category Tabs */}
+      <Tabs
+        items={categories}
+        activeId={filterGroup}
+        onChange={setFilterGroup}
+      />
 
-        {/* Quick Filters */}
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <div className="relative flex-1 md:w-60">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              placeholder="Search by name, pass, or table..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-          </div>
-
-          <select
-            value={filterGroup}
-            onChange={(e) => setFilterGroup(e.target.value)}
-            className="text-xs font-semibold bg-white border border-slate-200 rounded-xl px-3 py-2 text-slate-700 shadow-xs"
-          >
-            <option value="all">All Groups</option>
-            <option value="VIP">VIP</option>
-            <option value="Family">Family</option>
-            <option value="Corporate">Corporate</option>
-            <option value="Media">Media</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Guest Table */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {/* Guests Table */}
+      <Card className="overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200">
+            <thead className="bg-zinc-50 border-b border-zinc-200/80 text-zinc-500 font-mono uppercase text-[10px] tracking-wider">
               <tr>
-                <th className="py-3 px-4">Guest Name</th>
-                <th className="py-3 px-4">Group</th>
-                <th className="py-3 px-4">Table / Seating</th>
                 <th className="py-3 px-4">Pass Code</th>
-                <th className="py-3 px-4">Dietary Preference</th>
-                <th className="py-3 px-4">Plus Ones</th>
+                <th className="py-3 px-4">Guest Name</th>
+                <th className="py-3 px-4">Delegation Group</th>
+                <th className="py-3 px-4">Table #</th>
+                <th className="py-3 px-4">+Ones</th>
+                <th className="py-3 px-4">Dietary Requirement</th>
                 <th className="py-3 px-4">Gate Status</th>
-                <th className="py-3 px-4 text-center">Admission Toggle</th>
+                <th className="py-3 px-4 text-right">Quick Admission</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody className="divide-y divide-zinc-100 text-zinc-700">
               {filteredGuests.map((g) => (
-                <tr key={g.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="py-3.5 px-4">
-                    <p className="font-bold text-slate-900">{g.name}</p>
-                    <p className="text-[10px] text-slate-400">{g.phone || g.email}</p>
+                <tr key={g.id} className="hover:bg-zinc-50/60 transition-colors">
+                  <td className="py-3 px-4 font-mono font-medium text-zinc-900">{g.passCode}</td>
+                  <td className="py-3 px-4">
+                    <p className="font-semibold text-zinc-950">{g.name}</p>
+                    <p className="text-[11px] text-zinc-400 font-mono">{g.phone || g.email}</p>
                   </td>
-                  <td className="py-3.5 px-4">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${groupColors[g.group] || 'bg-slate-100'}`}>
+                  <td className="py-3 px-4">
+                    <Badge variant={g.group === 'VIP' ? 'purple' : 'neutral'} dot>
                       {g.group}
-                    </span>
+                    </Badge>
                   </td>
-                  <td className="py-3.5 px-4 font-mono font-bold text-indigo-700">{g.tableNo}</td>
-                  <td className="py-3.5 px-4 font-mono text-slate-600 font-semibold">{g.passCode}</td>
-                  <td className="py-3.5 px-4 text-slate-700 flex items-center gap-1.5 pt-4">
-                    <Utensils className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                    <span>{g.dietaryPref}</span>
+                  <td className="py-3 px-4 font-mono font-semibold text-zinc-900">{g.tableNo}</td>
+                  <td className="py-3 px-4 font-mono text-zinc-600">+{g.plusOnes}</td>
+                  <td className="py-3 px-4 text-zinc-500">
+                    <div className="flex items-center gap-1.5">
+                      <Utensils className="w-3 h-3 text-zinc-400 shrink-0" />
+                      <span>{g.dietaryPref}</span>
+                    </div>
                   </td>
-                  <td className="py-3.5 px-4 font-medium text-slate-700">+{g.plusOnes}</td>
-                  <td className="py-3.5 px-4">
-                    {g.isCheckedIn ? (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        <span>Admitted ({g.checkInTime?.split(' ')[1] || 'Checked In'})</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span>Pending</span>
-                      </span>
-                    )}
+                  <td className="py-3 px-4">
+                    <Badge variant={g.isCheckedIn ? 'success' : 'neutral'} dot>
+                      {g.isCheckedIn ? 'Admitted' : 'Pending'}
+                    </Badge>
                   </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <button
+                  <td className="py-3 px-4 text-right">
+                    <Button
+                      variant={g.isCheckedIn ? 'secondary' : 'primary'}
+                      size="sm"
+                      className="h-7 px-2.5 text-[11px]"
                       onClick={() => toggleGuestCheckIn(g.id)}
-                      className={`px-3 py-1 rounded text-[11px] font-bold transition-all shadow-xs ${
-                        g.isCheckedIn
-                          ? 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
-                          : 'bg-emerald-600 text-white hover:bg-emerald-700'
-                      }`}
+                      icon={g.isCheckedIn ? <Check className="w-3 h-3" /> : undefined}
                     >
-                      {g.isCheckedIn ? 'Undo Check-in' : 'Admit Now'}
-                    </button>
+                      {g.isCheckedIn ? 'Admitted' : 'Check In'}
+                    </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {/* Modal: Add Guest */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 animate-in fade-in zoom-in-95 duration-150">
-            <h2 className="text-base font-bold text-slate-900">Add Guest RSVP</h2>
+      {/* Add Guest Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add Guest RSVP"
+        description="Register a guest profile with seating table and gate pass code."
+        footer={
+          <>
+            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleCreateGuest}>
+              Confirm Guest
+            </Button>
+          </>
+        }
+      >
+        <form onSubmit={handleCreateGuest} className="space-y-3.5">
+          <Input
+            label="Guest Full Name"
+            required
+            placeholder="e.g. Vikramaditya Birla"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          />
 
-            <form onSubmit={handleCreateGuest} className="space-y-3.5 mt-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Guest Full Name *</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Anand & Radhika Piramal"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Guest Category</label>
-                  <select
-                    value={formData.group}
-                    onChange={(e) => setFormData({ ...formData, group: e.target.value as any })}
-                    className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                  >
-                    <option value="VIP">VIP</option>
-                    <option value="Family">Family</option>
-                    <option value="Corporate">Corporate</option>
-                    <option value="Media">Media</option>
-                    <option value="General">General</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Table Number</label>
-                  <input
-                    type="text"
-                    value={formData.tableNo}
-                    onChange={(e) => setFormData({ ...formData, tableNo: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    placeholder="+91 98200 00000"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Plus-Ones</label>
-                  <input
-                    type="number"
-                    min="0"
-                    value={formData.plusOnes}
-                    onChange={(e) => setFormData({ ...formData, plusOnes: Number(e.target.value) })}
-                    className="w-full text-xs px-3 py-2 rounded-lg border border-slate-300"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Dietary Preference</label>
-                <select
-                  value={formData.dietaryPref}
-                  onChange={(e) => setFormData({ ...formData, dietaryPref: e.target.value })}
-                  className="w-full text-xs px-2.5 py-2 rounded-lg border border-slate-300 bg-white"
-                >
-                  <option value="Jain Pure Vegetarian">Jain Pure Vegetarian</option>
-                  <option value="Vegetarian">Vegetarian</option>
-                  <option value="Non-Vegetarian">Non-Vegetarian</option>
-                  <option value="Vegan">Vegan</option>
-                  <option value="Gluten-Free">Gluten-Free</option>
-                </select>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-200">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md"
-                >
-                  Confirm Guest
-                </button>
-              </div>
-            </form>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Email Address"
+              type="email"
+              placeholder="guest@birla.com"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+            />
+            <Input
+              label="Phone Number"
+              placeholder="+91 98201 11223"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+            />
           </div>
-        </div>
-      )}
+
+          <div className="grid grid-cols-3 gap-3">
+            <Select
+              label="Delegation Group"
+              value={formData.group}
+              onChange={(e) => setFormData({ ...formData, group: e.target.value as any })}
+            >
+              <option value="VIP">VIP</option>
+              <option value="Family">Family</option>
+              <option value="Corporate">Corporate</option>
+              <option value="Media">Media</option>
+              <option value="General">General</option>
+            </Select>
+
+            <Input
+              label="Table Number"
+              placeholder="e.g. T-12"
+              value={formData.tableNo}
+              onChange={(e) => setFormData({ ...formData, tableNo: e.target.value })}
+            />
+
+            <Input
+              label="Plus Ones"
+              type="number"
+              value={formData.plusOnes}
+              onChange={(e) => setFormData({ ...formData, plusOnes: Number(e.target.value) })}
+            />
+          </div>
+
+          <Input
+            label="Dietary Requirement"
+            value={formData.dietaryPref}
+            onChange={(e) => setFormData({ ...formData, dietaryPref: e.target.value })}
+          />
+        </form>
+      </Modal>
     </div>
   );
 }

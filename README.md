@@ -116,5 +116,7 @@ npm run db:seed
 ├── prisma/
 │   ├── schema.prisma    # PostgreSQL Prisma schema for Supabase
 │   └── seed.js          # Database seeder
-└── legacy_laravel/      # Safely archived legacy PHP code
+└── supabase/
+    ├── schema.sql       # Pure PostgreSQL DDL
+    └── seed.sql         # Seed dataset
 ```

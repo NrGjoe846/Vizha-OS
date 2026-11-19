@@ -1,0 +1,32 @@
+import type { Metadata } from 'next';
+import './globals.css';
+import { ERPProvider } from '@/lib/store';
+import { Navbar } from '@/components/Navbar';
+import { Sidebar } from '@/components/Sidebar';
+
+export const metadata: Metadata = {
+  title: 'EventFlow ERP – Enterprise Event Management Software',
+  description: 'Enterprise Multi-Tenant Event Management ERP built with Next.js 15, TypeScript, Tailwind CSS, Prisma & Supabase',
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased flex flex-col">
+        <ERPProvider>
+          <Navbar />
+          <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+              {children}
+            </main>
+          </div>
+        </ERPProvider>
+      </body>
+    </html>
+  );
+}

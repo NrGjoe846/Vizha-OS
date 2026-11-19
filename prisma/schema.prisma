@@ -1,0 +1,483 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  legalName String?
+  email     String?
+  phone     String?
+  gstin     String?
+  pan       String?
+  address   String?
+  city      String?
+  state     String?
+  pincode   String?
+  currency  String   @default("INR")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  branches    Branch[]
+  departments Department[]
+  users       User[]
+  events      Event[]
+}
+
+model Branch {
+  id        String   @id @default(uuid())
+  companyId String
+  name      String
+  code      String
+  city      String
+  address   String?
+  isHeadquarters Boolean @default(false)
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users   User[]
+  events  Event[]
+}
+
+model Department {
+  id        String   @id @default(uuid())
+  companyId String
+  name      String
+  code      String
+  createdAt DateTime @default(now())
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  users   User[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  companyId    String?
+  branchId     String?
+  departmentId String?
+  name         String
+  email        String   @unique
+  phone        String?
+  password     String
+  role         String   @default("operations") // super_admin, event_manager, sales_executive, accountant, operations, client, vendor
+  avatar       String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company      Company?    @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  branch       Branch?     @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+
+  managedEvents Event[]    @relation("EventManager")
+  assignedTasks EventTask[] @relation("TaskAssignee")
+  leads         Lead[]      @relation("LeadOwner")
+}
+
+model Client {
+  id          String   @id @default(uuid())
+  name        String
+  companyName String?
+  email       String
+  phone       String
+  gstin       String?
+  address     String?
+  city        String?
+  state       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  leads      Lead[]
+  events     Event[]
+  quotations Quotation[]
+  invoices   Invoice[]
+}
+
+model Lead {
+  id              String    @id @default(uuid())
+  title           String
+  clientName      String
+  email           String
+  phone           String
+  companyName     String?
+  eventType       String
+  estimatedBudget Float     @default(0)
+  guestCount      Int       @default(0)
+  eventDate       DateTime?
+  source          String    @default("Website") // Referral, Website, Social Media, Walk-in, Cold Call
+  stage           String    @default("new") // new, contacted, qualified, proposal_sent, negotiating, converted, lost
+  priority        String    @default("medium") // low, medium, high, urgent
+  assignedToId    String?
+  clientId        String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  assignedTo User?          @relation("LeadOwner", fields: [assignedToId], references: [id])
+  client     Client?        @relation(fields: [clientId], references: [id])
+  activities LeadActivity[]
+}
+
+model LeadActivity {
+  id        String   @id @default(uuid())
+  leadId    String
+  type      String   // call, email, meeting, note, site_visit
+  title     String
+  notes     String?
+  createdAt DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+}
+
+model Venue {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   @default("Hotel Banquet") // Hotel Banquet, Open Ground, Resort, Convention Center, Palace
+  city        String
+  address     String
+  capacity    Int      @default(500)
+  rentalRate  Float    @default(0)
+  contactName String?
+  contactPhone String?
+  amenities   String?  // JSON string or comma-separated: AC, Parking, Catering, Audio/Visual, Rooms
+  rating      Float    @default(4.8)
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  events   Event[]
+  bookings VenueBooking[]
+}
+
+model VenueBooking {
+  id        String   @id @default(uuid())
+  venueId   String
+  eventId   String?
+  startDate DateTime
+  endDate   DateTime
+  status    String   @default("confirmed") // tentative, confirmed, cancelled
+  cost      Float    @default(0)
+  notes     String?
+
+  venue Venue  @relation(fields: [venueId], references: [id], onDelete: Cascade)
+  event Event? @relation(fields: [eventId], references: [id], onDelete: SetNull)
+}
+
+model VendorCategory {
+  id        String   @id @default(uuid())
+  name      String
+  code      String
+  createdAt DateTime @default(now())
+
+  vendors Vendor[]
+}
+
+model Vendor {
+  id          String   @id @default(uuid())
+  categoryId  String
+  name        String
+  companyName String
+  email       String
+  phone       String
+  city        String
+  gstin       String?
+  rating      Float    @default(4.7)
+  bankName    String?
+  accountNo   String?
+  ifscCode    String?
+  createdAt   DateTime @default(now())
+
+  category    VendorCategory     @relation(fields: [categoryId], references: [id])
+  assignments VendorAssignment[]
+}
+
+model VendorAssignment {
+  id          String   @id @default(uuid())
+  vendorId    String
+  eventId     String
+  scopeOfWork String
+  contractAmt Float    @default(0)
+  advancePaid Float    @default(0)
+  status      String   @default("assigned") // assigned, in_progress, completed, settled
+  createdAt   DateTime @default(now())
+
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  event  Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventCategory {
+  id          String   @id @default(uuid())
+  name        String
+  code        String
+  icon        String?
+  description String?
+
+  events Event[]
+}
+
+model Event {
+  id          String    @id @default(uuid())
+  companyId   String?
+  branchId    String?
+  categoryId  String?
+  clientId    String
+  venueId     String?
+  managerId   String?
+  code        String    @unique
+  title       String
+  description String?
+  eventType   String    @default("Wedding")
+  startDate   DateTime
+  endDate     DateTime
+  location    String?
+  guestCount  Int       @default(200)
+  status      String    @default("planning") // draft, planning, confirmed, in_progress, completed, cancelled
+  budget      Float     @default(0)
+  actualSpend Float     @default(0)
+  coverImage  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  company           Company?           @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  branch            Branch?            @relation(fields: [branchId], references: [id], onDelete: SetNull)
+  category          EventCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  client            Client             @relation(fields: [clientId], references: [id])
+  venue             Venue?             @relation(fields: [venueId], references: [id], onDelete: SetNull)
+  manager           User?              @relation("EventManager", fields: [managerId], references: [id])
+
+  schedules         EventSchedule[]
+  tasks             EventTask[]
+  quotations        Quotation[]
+  invoices          Invoice[]
+  expenses          EventExpense[]
+  vendorAssignments VendorAssignment[]
+  venueBookings     VenueBooking[]
+  guests            EventGuest[]
+  ticketTypes       TicketType[]
+}
+
+model EventSchedule {
+  id          String   @id @default(uuid())
+  eventId     String
+  dayNumber   Int      @default(1)
+  timeSlot    String
+  title       String
+  description String?
+  location    String?
+  leadPerson  String?
+  cueNotes    String?
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+}
+
+model EventTask {
+  id          String    @id @default(uuid())
+  eventId     String
+  assignedToId String?
+  title       String
+  category    String    @default("Production") // Production, Logistics, Decor, Catering, Tech/AV, Licensing
+  priority    String    @default("medium") // low, medium, high, urgent
+  dueDate     DateTime?
+  isCompleted Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  event      Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  assignedTo User? @relation("TaskAssignee", fields: [assignedToId], references: [id])
+}
+
+model Quotation {
+  id            String          @id @default(uuid())
+  quotationNo   String          @unique
+  clientId      String
+  eventId       String?
+  issueDate     DateTime        @default(now())
+  validUntil    DateTime
+  subtotal      Float           @default(0)
+  taxRate       Float           @default(18.0) // 18% GST
+  taxAmount     Float           @default(0)
+  discount      Float           @default(0)
+  totalAmount   Float           @default(0)
+  status        String          @default("draft") // draft, sent, accepted, rejected
+  terms         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  client Client          @relation(fields: [clientId], references: [id])
+  event  Event?          @relation(fields: [eventId], references: [id])
+  items  QuotationItem[]
+}
+
+model QuotationItem {
+  id          String @id @default(uuid())
+  quotationId String
+  description String
+  quantity    Int    @default(1)
+  unitPrice   Float  @default(0)
+  amount      Float  @default(0)
+
+  quotation Quotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id          String        @id @default(uuid())
+  invoiceNo   String        @unique
+  clientId    String
+  eventId     String?
+  issueDate   DateTime      @default(now())
+  dueDate     DateTime
+  subtotal    Float         @default(0)
+  taxRate     Float         @default(18.0)
+  taxAmount   Float         @default(0)
+  totalAmount Float         @default(0)
+  paidAmount  Float         @default(0)
+  balanceDue  Float         @default(0)
+  status      String        @default("unpaid") // unpaid, partial, paid, overdue
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  client   Client        @relation(fields: [clientId], references: [id])
+  event    Event?        @relation(fields: [eventId], references: [id])
+  items    InvoiceItem[]
+  payments Payment[]
+}
+
+model InvoiceItem {
+  id          String @id @default(uuid())
+  invoiceId   String
+  description String
+  quantity    Int    @default(1)
+  unitPrice   Float  @default(0)
+  amount      Float  @default(0)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  invoiceId     String
+  amount        Float
+  paymentDate   DateTime @default(now())
+  paymentMethod String   @default("Bank Transfer") // Bank Transfer, UPI, Credit Card, Cheque, Cash
+  referenceNo   String?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model ExpenseCategory {
+  id        String   @id @default(uuid())
+  name      String
+  code      String
+  createdAt DateTime @default(now())
+
+  expenses EventExpense[]
+}
+
+model EventExpense {
+  id          String   @id @default(uuid())
+  eventId     String
+  categoryId  String
+  description String
+  amount      Float
+  vendorName  String?
+  receiptUrl  String?
+  status      String   @default("approved") // pending, approved, rejected
+  expenseDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  event    Event           @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  category ExpenseCategory @relation(fields: [categoryId], references: [id])
+}
+
+model InventoryCategory {
+  id        String   @id @default(uuid())
+  name      String
+  code      String
+  createdAt DateTime @default(now())
+
+  items InventoryItem[]
+}
+
+model InventoryItem {
+  id          String   @id @default(uuid())
+  categoryId  String
+  name        String
+  sku         String   @unique
+  totalQty    Int      @default(0)
+  allocatedQty Int     @default(0)
+  rentalPrice Float    @default(0)
+  condition   String   @default("Good") // Good, Maintenance, Damaged
+  location    String?
+  createdAt   DateTime @default(now())
+
+  category InventoryCategory @relation(fields: [categoryId], references: [id])
+}
+
+model GuestGroup {
+  id        String   @id @default(uuid())
+  name      String
+  code      String
+  createdAt DateTime @default(now())
+
+  guests EventGuest[]
+}
+
+model EventGuest {
+  id          String   @id @default(uuid())
+  eventId     String
+  groupId     String?
+  name        String
+  email       String?
+  phone       String?
+  tableNo     String?
+  passCode    String   @unique
+  plusOnes    Int      @default(0)
+  dietaryPref String?  // Veg, Jain, Non-Veg, Vegan, None
+  isCheckedIn Boolean  @default(false)
+  checkInTime DateTime?
+  createdAt   DateTime @default(now())
+
+  event Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  group GuestGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+}
+
+model TicketType {
+  id          String   @id @default(uuid())
+  eventId     String
+  name        String   // Early Bird, General Admission, VIP Pass, VVIP Lounge
+  price       Float    @default(0)
+  totalSupply Int      @default(100)
+  soldCount   Int      @default(0)
+  perks       String?
+  createdAt   DateTime @default(now())
+
+  event   Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tickets Ticket[]
+}
+
+model Ticket {
+  id           String    @id @default(uuid())
+  ticketTypeId String
+  ticketNumber String    @unique
+  qrToken      String    @unique
+  buyerName    String
+  buyerEmail   String
+  buyerPhone   String?
+  pricePaid    Float     @default(0)
+  isScanned    Boolean   @default(false)
+  scannedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+}

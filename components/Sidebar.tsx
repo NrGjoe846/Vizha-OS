@@ -56,7 +56,7 @@ export function Sidebar() {
       title: 'Sales & CRM',
       items: [
         { label: 'Leads Pipeline', href: '/leads', icon: Kanban, badge: pendingLeadsCount },
-        { label: 'Clients', href: '/clients', icon: Users },
+        { label: 'Customer Directory', href: '/clients', icon: Users },
         { label: 'Quotations', href: '/quotations', icon: FileText },
       ]
     },

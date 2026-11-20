@@ -18,17 +18,245 @@ export interface UserProfile {
   departmentName?: string;
 }
 
-export interface Client {
+// ==========================================
+// CUSTOMER DIRECTORY MASTER ENTITIES
+// ==========================================
+
+export type CustomerType =
+  | 'Individual'
+  | 'Family'
+  | 'Corporate'
+  | 'Institution'
+  | 'Government'
+  | 'Agency'
+  | 'Association'
+  | 'Other';
+
+export type CustomerCategory =
+  | 'VIP'
+  | 'Premium'
+  | 'Regular'
+  | 'New'
+  | 'Returning'
+  | 'Corporate'
+  | 'Institutional'
+  | 'Referral Partner'
+  | 'Inactive'
+  | 'Blacklisted';
+
+export type CustomerStatus =
+  | 'active'
+  | 'inactive'
+  | 'blocked'
+  | 'archived'
+  | 'pending_verification';
+
+export type CustomerContactRole =
+  | 'Owner / Director'
+  | 'Event Coordinator'
+  | 'HR Manager'
+  | 'Procurement Manager'
+  | 'Finance Manager'
+  | 'Accounts Payable'
+  | 'Personal Assistant'
+  | 'Family Representative'
+  | 'Authorized Signatory'
+  | 'Other';
+
+export interface CustomerContact {
   id: string;
   name: string;
-  companyName?: string;
-  email: string;
+  designation?: string;
+  role: CustomerContactRole;
   phone: string;
-  gstin?: string;
+  alternatePhone?: string;
+  whatsapp?: string;
+  email: string;
+  preferredChannel?: 'phone' | 'whatsapp' | 'email' | 'meeting';
+  isPrimary: boolean;
+  isDecisionMaker: boolean;
+  isBillingContact: boolean;
+  portalAccess: boolean;
+  permissions?: {
+    canViewQuotations?: boolean;
+    canApproveProposals?: boolean;
+    canViewInvoices?: boolean;
+    canMakePayments?: boolean;
+    canViewEventDetails?: boolean;
+    canUploadDocuments?: boolean;
+    canManageContacts?: boolean;
+  };
+  notes?: string;
+}
+
+export type CustomerAddressType =
+  | 'Registered office'
+  | 'Billing address'
+  | 'Communication address'
+  | 'Residential address'
+  | 'Event location'
+  | 'Branch address'
+  | 'Other';
+
+export interface CustomerAddress {
+  id: string;
+  addressName: string;
+  type: CustomerAddressType;
+  line1: string;
+  line2?: string;
+  landmark?: string;
   city: string;
+  district?: string;
+  state: string;
+  country: string;
+  pinCode: string;
+  googleMapsUrl?: string;
+  isPrimaryBilling: boolean;
+  isPrimaryCommunication: boolean;
+  isPrimaryEvent?: boolean;
+}
+
+export interface CustomerDocument {
+  id: string;
+  name: string;
+  category:
+    | 'Contract / Agreement'
+    | 'PAN Document'
+    | 'GST Certificate'
+    | 'Company Registration'
+    | 'Purchase Order'
+    | 'Event Brief'
+    | 'Payment Receipt'
+    | 'Approval Letter'
+    | 'Other';
+  fileUrl: string;
+  fileSize: string;
+  uploadedAt: string;
+  uploadedBy: string;
+  expiryDate?: string;
+  accessLevel: 'public' | 'internal' | 'restricted';
+}
+
+export interface CustomerCommunication {
+  id: string;
+  channel: 'call' | 'whatsapp' | 'email' | 'meeting' | 'sms' | 'portal_message';
+  title: string;
+  summary: string;
+  sender: string;
+  recipient: string;
+  timestamp: string;
+  outcome?: string;
+  deliveryStatus: 'sent' | 'delivered' | 'read' | 'failed';
+}
+
+export interface CustomerNote {
+  id: string;
+  author: string;
+  content: string;
+  createdAt: string;
+  visibility: 'all' | 'sales' | 'operations' | 'finance' | 'admin';
+  isPinned: boolean;
+  priority: 'normal' | 'high' | 'urgent';
+}
+
+export interface CustomerFeedbackRecord {
+  id: string;
+  eventId?: string;
+  eventName?: string;
+  rating: number; // 1 to 5
+  csatScore: number; // e.g. 95%
+  serviceRating: number;
+  venueRating: number;
+  cateringRating: number;
+  decorRating: number;
+  comments: string;
+  recommendationScore: number; // 1-10 NPS
+  feedbackDate: string;
+  source: string;
+}
+
+export interface CustomerComplaint {
+  id: string;
+  ticketNo: string;
+  title: string;
+  description: string;
+  category: 'Service Quality' | 'Billing / Invoice' | 'Vendor Delays' | 'Event Operations' | 'Staff Behaviour' | 'Other';
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'open' | 'assigned' | 'in_progress' | 'awaiting_customer' | 'resolved' | 'closed' | 'reopened';
+  assignedTo: string;
+  eventId?: string;
+  eventName?: string;
+  createdAt: string;
+  resolvedAt?: string;
+  resolutionNotes?: string;
+}
+
+export interface CustomerRelationship {
+  id: string;
+  relatedCustomerId: string;
+  relatedCustomerName: string;
+  relationshipType: 'Parent Company' | 'Subsidiary' | 'Family Member' | 'Referral' | 'Sister Concern' | 'Agency Representation';
+  notes?: string;
+}
+
+export interface CustomerAuditEntry {
+  id: string;
+  action: string;
+  performedBy: string;
+  timestamp: string;
+  details: string;
+}
+
+export interface Client {
+  id: string;
+  customerCode?: string; // e.g. CUS-2026-00001
+  name: string;
+  displayName?: string;
+  customerType?: CustomerType;
+  category?: CustomerCategory;
+  status?: CustomerStatus;
+  companyName?: string;
+  primaryContact?: string;
+  email: string;
+  alternateEmail?: string;
+  phone: string;
+  alternatePhone?: string;
+  website?: string;
+  gstin?: string;
+  pan?: string;
+  industry?: string;
+  dateOfBirth?: string;
+  anniversary?: string;
+  source?: string;
+  accountManager?: string;
+  branchName?: string;
+  tags?: string[];
+  internalNotes?: string;
+  city: string;
+  state?: string;
   totalBookings: number;
   totalSpent: number;
+  totalInvoiced?: number;
+  totalOutstanding?: number;
+  advanceBalance?: number;
+  lastEventDate?: string;
+  loyaltyPoints?: number;
+  referralCount?: number;
+  referredBy?: string;
+  registeredAt?: string;
+  mergedWithId?: string;
+  contacts?: CustomerContact[];
+  addresses?: CustomerAddress[];
+  documents?: CustomerDocument[];
+  communications?: CustomerCommunication[];
+  notes?: CustomerNote[];
+  feedback?: CustomerFeedbackRecord[];
+  complaints?: CustomerComplaint[];
+  relationships?: CustomerRelationship[];
+  auditLogs?: CustomerAuditEntry[];
 }
+
+export type Customer = Client;
 
 export type LeadStage =
   | 'new'

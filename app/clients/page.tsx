@@ -2,219 +2,323 @@
 
 import React, { useState } from 'react';
 import { useERP } from '@/lib/store';
+import { Client, CustomerStatus } from '@/lib/types';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { Button } from '@/components/ui/Button';
+import { Tabs } from '@/components/ui/Tabs';
+import { CustomerDashboardStats } from '@/components/customers/CustomerDashboardStats';
+import { CustomerAnalyticsView } from '@/components/customers/CustomerAnalyticsView';
+import { CustomerTable } from '@/components/customers/CustomerTable';
+import { CustomerContactsView } from '@/components/customers/CustomerContactsView';
+import { CustomerExperienceView } from '@/components/customers/CustomerExperienceView';
+import { Customer360Modal } from '@/components/customers/Customer360Modal';
+import { NewCustomerModal } from '@/components/customers/NewCustomerModal';
+import { CustomerMergeModal } from '@/components/customers/CustomerMergeModal';
+import { CustomerQAExportModal } from '@/components/customers/CustomerQAExportModal';
 import {
   Users,
   Plus,
-  Building,
-  Mail,
-  Phone,
-  Calendar,
-  DollarSign,
-  Search,
-  MapPin,
-  ExternalLink
+  BarChart2,
+  Contact,
+  Star,
+  GitMerge,
+  ShieldCheck,
+  Building2,
+  Sparkles
 } from 'lucide-react';
-import { PageHeader } from '@/components/ui/PageHeader';
-import { Card, CardContent } from '@/components/ui/Card';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Modal } from '@/components/ui/Modal';
-import { formatCurrency } from '@/lib/format';
 
 export default function ClientsPage() {
-  const { clients, addClient } = useERP();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    clients,
+    events,
+    quotations,
+    invoices,
+    selectedBranch,
+    setSelectedBranch,
+    addClient,
+    updateCustomer,
+    addCustomerContact,
+    deleteCustomerContact,
+    addCustomerAddress,
+    deleteCustomerAddress,
+    addCustomerDocument,
+    addCustomerCommunication,
+    addCustomerNote,
+    addCustomerFeedback,
+    addCustomerComplaint,
+    updateCustomerComplaint,
+    mergeCustomers,
+    archiveCustomer,
+    restoreCustomer,
+    blockCustomer,
+    bulkUpdateCustomerStatus,
+    bulkAssignAccountManager,
+    bulkAddCustomerTags
+  } = useERP();
 
-  const [formData, setFormData] = useState({
-    name: '',
-    companyName: '',
-    email: '',
-    phone: '',
-    gstin: '',
-    city: 'Mumbai'
-  });
+  const [activeTab, setActiveTab] = useState<'directory' | 'analytics' | 'contacts' | 'experience' | 'duplicates'>('directory');
+  const [selectedCustomer, setSelectedCustomer] = useState<Client | null>(null);
+  const [isNewCustomerModalOpen, setIsNewCustomerModalOpen] = useState(false);
+  const [isMergeModalOpen, setIsMergeModalOpen] = useState(false);
+  const [mergeTargetClient, setMergeTargetClient] = useState<Client | null>(null);
+  const [isQAModalOpen, setIsQAModalOpen] = useState(false);
+  const [notificationBanner, setNotificationBanner] = useState<string | null>(null);
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault();
-    addClient(formData);
-    setIsModalOpen(false);
-    setFormData({
-      name: '',
-      companyName: '',
-      email: '',
-      phone: '',
-      gstin: '',
-      city: 'Mumbai'
-    });
+  // Branch-scoped clients
+  const branchFilteredClients = selectedBranch === 'All Branches'
+    ? clients
+    : clients.filter(c => c.branchName === selectedBranch || (!c.branchName && selectedBranch === 'Mumbai HQ'));
+
+  const directoryTabs = [
+    { id: 'directory', label: 'Master Directory Table', count: branchFilteredClients.length, icon: <Users className="w-3.5 h-3.5" /> },
+    { id: 'analytics', label: 'Analytics & CLV Insights', icon: <BarChart2 className="w-3.5 h-3.5" /> },
+    { id: 'contacts', label: 'Contacts & Addresses', icon: <Contact className="w-3.5 h-3.5" /> },
+    { id: 'experience', label: 'Feedback & Complaints', icon: <Star className="w-3.5 h-3.5" /> },
+    { id: 'duplicates', label: 'Duplicate Detection & Merge', icon: <GitMerge className="w-3.5 h-3.5" /> }
+  ];
+
+  const handleOpenMerge = (client?: Client) => {
+    setMergeTargetClient(client || null);
+    setIsMergeModalOpen(true);
   };
 
-  const filteredClients = clients.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (c.companyName && c.companyName.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    c.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    c.email.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const handleConfirmMerge = (masterId: string, secondaryId: string, reason: string) => {
+    mergeCustomers(masterId, secondaryId, reason);
+    setNotificationBanner(`Successfully merged duplicate customer record into master profile. All events, invoices, and contracts consolidated.`);
+    setTimeout(() => setNotificationBanner(null), 5000);
+  };
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-6 w-full max-w-[1700px] mx-auto">
       {/* Page Header */}
       <PageHeader
-        title="Clients Directory"
-        description="Master client profiles, GSTIN identification records, lifetime billing, and portal accounts."
+        title="Customer Directory"
+        description="Centralized customer master database: authoritative profiles, multi-contact governance, addresses, 360° histories, authoritative ledgers, documents, and experience."
         badge={
           <span className="text-xs font-mono px-2 py-0.5 rounded bg-zinc-100 text-zinc-700 border border-zinc-200">
-            {clients.length} Accounts
+            {branchFilteredClients.length} Master Accounts
           </span>
         }
         actions={
-          <div className="flex items-center gap-2">
-            <div className="w-52">
-              <Input
-                placeholder="Search clients..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                icon={<Search className="w-3.5 h-3.5" />}
-              />
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Branch Selector */}
+            <div className="flex items-center gap-1.5 text-xs bg-zinc-50 border border-zinc-200 rounded-lg px-2 py-1">
+              <Building2 className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+              <select
+                value={selectedBranch}
+                onChange={(e) => setSelectedBranch(e.target.value)}
+                className="bg-transparent text-xs font-medium text-zinc-800 focus:outline-none cursor-pointer"
+              >
+                <option value="All Branches">All Branches Scope</option>
+                <option value="Mumbai HQ">Mumbai HQ</option>
+                <option value="Delhi NCR">Delhi NCR</option>
+                <option value="Bangalore Hub">Bangalore Hub</option>
+              </select>
             </div>
+
+            {/* QA Checklist Trigger */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsQAModalOpen(true)}
+              icon={<ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />}
+            >
+              QA Acceptance (20/20)
+            </Button>
+
+            {/* Merge Tool Trigger */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenMerge()}
+              icon={<GitMerge className="w-3.5 h-3.5 text-purple-600" />}
+            >
+              Merge Tool
+            </Button>
+
+            {/* Add Customer Button */}
             <Button
               variant="primary"
               size="sm"
-              onClick={() => setIsModalOpen(true)}
+              onClick={() => setIsNewCustomerModalOpen(true)}
               icon={<Plus className="w-3.5 h-3.5" />}
             >
-              Add Client
+              Add Customer
             </Button>
           </div>
         }
       />
 
-      {/* Clients Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredClients.map((c) => (
-          <Card key={c.id} className="p-4 flex flex-col justify-between space-y-4">
-            <div className="space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-xs font-semibold text-zinc-800">
-                    {c.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold text-zinc-950 tracking-tight">{c.name}</h3>
-                    <p className="text-[11px] text-zinc-500">{c.companyName || 'Private Individual'}</p>
-                  </div>
-                </div>
-                <Badge variant={c.companyName ? 'purple' : 'neutral'}>
-                  {c.companyName ? 'Corporate' : 'Individual'}
-                </Badge>
-              </div>
+      {/* Dynamic Feedback Notification Banner */}
+      {notificationBanner && (
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{notificationBanner}</span>
+          </div>
+          <button onClick={() => setNotificationBanner(null)} className="text-emerald-700 font-bold ml-2">✕</button>
+        </div>
+      )}
 
-              <div className="space-y-1.5 text-xs text-zinc-500 pt-1 border-t border-zinc-100">
-                <div className="flex items-center gap-2">
-                  <Mail className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <span className="truncate">{c.email}</span>
-                </div>
-                <div className="flex items-center gap-2 font-mono text-[11px]">
-                  <Phone className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <span>{c.phone}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
-                  <span>{c.city}</span>
-                </div>
-                {c.gstin && (
-                  <div className="pt-1">
-                    <span className="text-[10px] font-mono text-zinc-500 bg-zinc-50 px-1.5 py-0.5 rounded border border-zinc-200">
-                      GSTIN: {c.gstin}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
+      {/* Customer Directory Dashboard KPI Metrics */}
+      <CustomerDashboardStats clients={branchFilteredClients} selectedBranch={selectedBranch} />
 
-            {/* Financial Overview */}
-            <div className="pt-3 border-t border-zinc-100 flex items-center justify-between text-xs">
+      {/* Primary Navigation Tabs */}
+      <Tabs
+        items={directoryTabs}
+        activeId={activeTab}
+        onChange={(id) => setActiveTab(id as any)}
+      />
+
+      {/* TAB 1: MASTER DIRECTORY TABLE */}
+      {activeTab === 'directory' && (
+        <CustomerTable
+          clients={branchFilteredClients}
+          onSelectCustomer={(c) => setSelectedCustomer(c)}
+          onEditCustomer={(c) => setSelectedCustomer(c)}
+          onOpenMergeModal={handleOpenMerge}
+          onArchiveCustomer={(id) => {
+            archiveCustomer(id);
+            setNotificationBanner(`Customer account archived successfully.`);
+            setTimeout(() => setNotificationBanner(null), 4000);
+          }}
+          onRestoreCustomer={(id) => {
+            restoreCustomer(id);
+            setNotificationBanner(`Customer account restored to active directory.`);
+            setTimeout(() => setNotificationBanner(null), 4000);
+          }}
+          onBulkUpdateStatus={bulkUpdateCustomerStatus}
+          onBulkAssignManager={bulkAssignAccountManager}
+          onBulkAddTags={bulkAddCustomerTags}
+        />
+      )}
+
+      {/* TAB 2: ANALYTICS & CLV INSIGHTS */}
+      {activeTab === 'analytics' && (
+        <CustomerAnalyticsView clients={branchFilteredClients} />
+      )}
+
+      {/* TAB 3: CONTACTS & ADDRESSES */}
+      {activeTab === 'contacts' && (
+        <CustomerContactsView
+          clients={branchFilteredClients}
+          onSelectCustomer={(c) => setSelectedCustomer(c)}
+        />
+      )}
+
+      {/* TAB 4: EXPERIENCE (FEEDBACK & COMPLAINTS) */}
+      {activeTab === 'experience' && (
+        <CustomerExperienceView
+          clients={branchFilteredClients}
+          onSelectCustomer={(c) => setSelectedCustomer(c)}
+          onResolveComplaint={(customerId, compId, notes) => {
+            updateCustomerComplaint(customerId, compId, {
+              status: 'resolved',
+              resolvedAt: new Date().toISOString().split('T')[0],
+              resolutionNotes: notes
+            });
+            setNotificationBanner(`Complaint ticket marked as resolved.`);
+            setTimeout(() => setNotificationBanner(null), 4000);
+          }}
+        />
+      )}
+
+      {/* TAB 5: DUPLICATE DETECTION & MERGE */}
+      {activeTab === 'duplicates' && (
+        <div className="space-y-4">
+          <div className="p-4 bg-white border border-zinc-200/80 rounded-xl space-y-3">
+            <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Bookings</span>
-                <p className="font-mono font-medium text-zinc-800">{c.totalBookings} Events</p>
+                <h3 className="font-bold text-zinc-900 text-sm">Duplicate Detection & Entity Resolution</h3>
+                <p className="text-zinc-500 text-xs">
+                  Scan and reconcile identical customer profiles sharing mobile numbers, email addresses, or GSTIN certificates.
+                </p>
               </div>
-              <div className="text-right">
-                <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-mono">Lifetime Spent</span>
-                <p className="font-mono font-semibold text-zinc-950">₹{formatCurrency(c.totalSpent)}</p>
-              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => handleOpenMerge()}
+                icon={<GitMerge className="w-3.5 h-3.5" />}
+              >
+                Launch Merge Assistant
+              </Button>
             </div>
-          </Card>
-        ))}
-      </div>
-
-      {/* Add Client Modal */}
-      <Modal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add Client Profile"
-        description="Create a client record with contact and GST credentials."
-        footer={
-          <>
-            <Button variant="outline" size="sm" onClick={() => setIsModalOpen(false)}>
-              Cancel
-            </Button>
-            <Button variant="primary" size="sm" onClick={handleCreate}>
-              Save Profile
-            </Button>
-          </>
-        }
-      >
-        <form onSubmit={handleCreate} className="space-y-3.5">
-          <Input
-            label="Client Contact Person"
-            required
-            placeholder="e.g. Rahul Oberoi"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-          />
-
-          <Input
-            label="Company Name (Optional)"
-            placeholder="e.g. Oberoi Enterprises Ltd"
-            value={formData.companyName}
-            onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-          />
-
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Email Address"
-              type="email"
-              required
-              placeholder="rahul@oberoi.com"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-            />
-            <Input
-              label="Phone Number"
-              required
-              placeholder="+91 98200 12345"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-            />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="GSTIN Number"
-              placeholder="27AABCU9603R1ZM"
-              value={formData.gstin}
-              onChange={(e) => setFormData({ ...formData, gstin: e.target.value })}
-            />
-            <Input
-              label="City"
-              placeholder="Mumbai"
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            />
-          </div>
-        </form>
-      </Modal>
+          <CustomerTable
+            clients={branchFilteredClients}
+            onSelectCustomer={(c) => setSelectedCustomer(c)}
+            onEditCustomer={(c) => setSelectedCustomer(c)}
+            onOpenMergeModal={handleOpenMerge}
+            onArchiveCustomer={archiveCustomer}
+            onRestoreCustomer={restoreCustomer}
+            onBulkUpdateStatus={bulkUpdateCustomerStatus}
+            onBulkAssignManager={bulkAssignAccountManager}
+            onBulkAddTags={bulkAddCustomerTags}
+          />
+        </div>
+      )}
+
+      {/* Customer 360° Modal Workspace */}
+      {selectedCustomer && (
+        <Customer360Modal
+          client={clients.find(c => c.id === selectedCustomer.id) || selectedCustomer}
+          isOpen={!!selectedCustomer}
+          onClose={() => setSelectedCustomer(null)}
+          events={events}
+          quotations={quotations}
+          invoices={invoices}
+          onAddContact={addCustomerContact}
+          onDeleteContact={deleteCustomerContact}
+          onAddAddress={addCustomerAddress}
+          onDeleteAddress={deleteCustomerAddress}
+          onAddDocument={addCustomerDocument}
+          onAddCommunication={addCustomerCommunication}
+          onAddNote={addCustomerNote}
+          onAddFeedback={addCustomerFeedback}
+          onAddComplaint={addCustomerComplaint}
+          onResolveComplaint={(custId, compId, resNotes) => {
+            updateCustomerComplaint(custId, compId, {
+              status: 'resolved',
+              resolvedAt: new Date().toISOString().split('T')[0],
+              resolutionNotes: resNotes
+            });
+          }}
+        />
+      )}
+
+      {/* New Customer Modal */}
+      <NewCustomerModal
+        isOpen={isNewCustomerModalOpen}
+        onClose={() => setIsNewCustomerModalOpen(false)}
+        onAddCustomer={(data) => {
+          const newC = addClient(data);
+          setNotificationBanner(`Successfully registered customer ${newC.name} (${newC.customerCode || newC.id}).`);
+          setTimeout(() => setNotificationBanner(null), 5000);
+        }}
+        existingCustomers={clients}
+      />
+
+      {/* Merge Modal */}
+      <CustomerMergeModal
+        isOpen={isMergeModalOpen}
+        onClose={() => {
+          setIsMergeModalOpen(false);
+          setMergeTargetClient(null);
+        }}
+        clients={clients}
+        events={events}
+        quotations={quotations}
+        invoices={invoices}
+        initialClient={mergeTargetClient}
+        onConfirmMerge={handleConfirmMerge}
+      />
+
+      {/* QA Compliance Modal */}
+      <CustomerQAExportModal
+        isOpen={isQAModalOpen}
+        onClose={() => setIsQAModalOpen(false)}
+      />
     </div>
   );
 }

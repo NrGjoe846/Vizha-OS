@@ -100,36 +100,888 @@ export const DEMO_USERS: UserProfile[] = [
 export const INITIAL_CLIENTS: Client[] = [
   {
     id: 'c-1',
+    customerCode: 'CUS-2026-00001',
     name: 'Rahul Oberoi',
+    displayName: 'Rahul Oberoi (Oberoi Global)',
+    customerType: 'Corporate',
+    category: 'VIP',
+    status: 'active',
     companyName: 'Oberoi Global Holdings',
+    primaryContact: 'Rahul Oberoi',
     email: 'rahul@oberoiglobal.com',
+    alternateEmail: 'accounts@oberoiglobal.com',
     phone: '+91 98201 11223',
+    alternatePhone: '+91 98201 11224',
+    website: 'https://oberoiglobal.com',
     gstin: '27AABCO1234F1Z8',
+    pan: 'AABCO1234F',
+    industry: 'Hospitality & Luxury Real Estate',
+    dateOfBirth: '1982-05-14',
+    anniversary: '2010-11-28',
+    source: 'HNI Network',
+    accountManager: 'Rajesh Verma',
+    branchName: 'Mumbai HQ',
+    tags: ['VIP', 'Luxury Wedding', 'High Value', 'Returning Customer'],
+    internalNotes: 'Chairman of Oberoi Global. Demands executive white-glove service. Direct billing with 15-day credit period.',
     city: 'Mumbai',
+    state: 'Maharashtra',
     totalBookings: 2,
-    totalSpent: 4500000
+    totalSpent: 4500000,
+    totalInvoiced: 4500000,
+    totalOutstanding: 0,
+    advanceBalance: 250000,
+    lastEventDate: '2026-11-30',
+    loyaltyPoints: 1250,
+    referralCount: 4,
+    referredBy: 'Vikramaditya Singhania',
+    registeredAt: '2025-01-10',
+    contacts: [
+      {
+        id: 'con-101',
+        name: 'Rahul Oberoi',
+        designation: 'Managing Director & Chairman',
+        role: 'Owner / Director',
+        phone: '+91 98201 11223',
+        whatsapp: '+91 98201 11223',
+        email: 'rahul@oberoiglobal.com',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: false,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: true,
+          canApproveProposals: true,
+          canViewInvoices: true,
+          canMakePayments: true,
+          canViewEventDetails: true,
+          canUploadDocuments: true,
+          canManageContacts: true
+        }
+      },
+      {
+        id: 'con-102',
+        name: 'Meera Chawla',
+        designation: 'VP Corporate Relations & Protocol',
+        role: 'Event Coordinator',
+        phone: '+91 98201 55667',
+        whatsapp: '+91 98201 55667',
+        email: 'meera.chawla@oberoiglobal.com',
+        isPrimary: false,
+        isDecisionMaker: false,
+        isBillingContact: false,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: true,
+          canApproveProposals: false,
+          canViewInvoices: false,
+          canMakePayments: false,
+          canViewEventDetails: true,
+          canUploadDocuments: true
+        }
+      },
+      {
+        id: 'con-103',
+        name: 'Ketan Shah',
+        designation: 'Head of Accounts & Treasury',
+        role: 'Finance Manager',
+        phone: '+91 98201 99887',
+        email: 'accounts@oberoiglobal.com',
+        isPrimary: false,
+        isDecisionMaker: false,
+        isBillingContact: true,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: false,
+          canApproveProposals: false,
+          canViewInvoices: true,
+          canMakePayments: true,
+          canViewEventDetails: false,
+          canUploadDocuments: true
+        }
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-101',
+        addressName: 'Corporate Headquarters',
+        type: 'Registered office',
+        line1: 'Oberoi Chambers, Level 18, Nariman Point',
+        line2: 'Marine Drive Bay',
+        city: 'Mumbai',
+        district: 'Mumbai City',
+        state: 'Maharashtra',
+        country: 'India',
+        pinCode: '400021',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true,
+        isPrimaryEvent: false
+      },
+      {
+        id: 'addr-102',
+        addressName: 'Oberoi Villa & Estate Grounds',
+        type: 'Event location',
+        line1: 'Plot 44, Madh Island Coastal Highway',
+        city: 'Mumbai',
+        district: 'Mumbai Suburban',
+        state: 'Maharashtra',
+        country: 'India',
+        pinCode: '400061',
+        isPrimaryBilling: false,
+        isPrimaryCommunication: false,
+        isPrimaryEvent: true
+      }
+    ],
+    documents: [
+      {
+        id: 'doc-101',
+        name: 'Oberoi Global - Master Production Framework Agreement 2026',
+        category: 'Contract / Agreement',
+        fileUrl: '/docs/oberoi-master-contract.pdf',
+        fileSize: '2.4 MB',
+        uploadedAt: '2026-02-15',
+        uploadedBy: 'Rajesh Verma',
+        accessLevel: 'internal'
+      },
+      {
+        id: 'doc-102',
+        name: 'GST Registration Certificate - Maharashtra',
+        category: 'GST Certificate',
+        fileUrl: '/docs/oberoi-gstin-cert.pdf',
+        fileSize: '840 KB',
+        uploadedAt: '2026-01-12',
+        uploadedBy: 'Priya Sharma',
+        accessLevel: 'public'
+      }
+    ],
+    communications: [
+      {
+        id: 'comm-101',
+        channel: 'meeting',
+        title: 'Q4 Luxury Events Review with Chairman',
+        summary: 'Met Mr. Oberoi at Nariman Point office. Approved annual gala & family destination wedding itinerary.',
+        sender: 'Rajesh Verma',
+        recipient: 'Rahul Oberoi',
+        timestamp: '2026-11-12 11:30',
+        outcome: 'Positive - Contract signed',
+        deliveryStatus: 'read'
+      },
+      {
+        id: 'comm-102',
+        channel: 'whatsapp',
+        title: 'Floral Design Mockups Dispatched',
+        summary: 'Sent high-res 3D walkthrough renderings for the Grand Oberoi Ballroom mandap setup.',
+        sender: 'Priya Sharma',
+        recipient: 'Meera Chawla',
+        timestamp: '2026-11-15 16:45',
+        outcome: 'Approved by client',
+        deliveryStatus: 'read'
+      }
+    ],
+    notes: [
+      {
+        id: 'note-101',
+        author: 'Priya Sharma',
+        content: 'Strict protocol: No artificial flowers in the sanctum area. High-altitude sound licenses secured.',
+        createdAt: '2026-11-10',
+        visibility: 'operations',
+        isPinned: true,
+        priority: 'urgent'
+      }
+    ],
+    feedback: [
+      {
+        id: 'fb-101',
+        eventId: 'evt-2026-001',
+        eventName: 'The Royal Oberoi Grand Wedding',
+        rating: 5,
+        csatScore: 98,
+        serviceRating: 5,
+        venueRating: 5,
+        cateringRating: 5,
+        decorRating: 5,
+        comments: 'World-class execution. Priya and team handled 550 guests flawlessly.',
+        recommendationScore: 10,
+        feedbackDate: '2026-11-30',
+        source: 'Post-Event Digital Survey'
+      }
+    ],
+    complaints: []
   },
   {
     id: 'c-2',
+    customerCode: 'CUS-2026-00002',
     name: 'Ananya Singhal',
+    displayName: 'Ananya Singhal (Singhal Tech Ventures)',
+    customerType: 'Corporate',
+    category: 'Corporate',
+    status: 'active',
     companyName: 'Singhal Tech Ventures',
+    primaryContact: 'Ananya Singhal',
     email: 'ananya@singhaltech.io',
+    alternateEmail: 'finance@singhaltech.io',
     phone: '+91 98100 44556',
+    alternatePhone: '+91 98100 44557',
+    website: 'https://singhaltech.io',
     gstin: '07AAACS9876Q1Z2',
+    pan: 'AAACS9876Q',
+    industry: 'Software & Venture Capital',
+    dateOfBirth: '1989-08-22',
+    source: 'Website',
+    accountManager: 'Rajesh Verma',
+    branchName: 'Delhi NCR',
+    tags: ['Corporate', 'Summit', 'B2B', 'Tech Client'],
+    internalNotes: 'Annual summit customer. Requires dual English-Japanese simultaneous interpretation equipment.',
     city: 'Delhi NCR',
+    state: 'Delhi',
     totalBookings: 3,
-    totalSpent: 2850000
+    totalSpent: 2850000,
+    totalInvoiced: 2850000,
+    totalOutstanding: 450000,
+    advanceBalance: 0,
+    lastEventDate: '2026-10-14',
+    loyaltyPoints: 850,
+    referralCount: 2,
+    registeredAt: '2025-06-18',
+    contacts: [
+      {
+        id: 'con-201',
+        name: 'Ananya Singhal',
+        designation: 'Managing Partner',
+        role: 'Owner / Director',
+        phone: '+91 98100 44556',
+        whatsapp: '+91 98100 44556',
+        email: 'ananya@singhaltech.io',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: false,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: true,
+          canApproveProposals: true,
+          canViewInvoices: true,
+          canMakePayments: true,
+          canViewEventDetails: true,
+          canUploadDocuments: true
+        }
+      },
+      {
+        id: 'con-202',
+        name: 'Rohan Mehta',
+        designation: 'Procurement Specialist',
+        role: 'Procurement Manager',
+        phone: '+91 98100 88990',
+        email: 'procurement@singhaltech.io',
+        isPrimary: false,
+        isDecisionMaker: false,
+        isBillingContact: true,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: true,
+          canApproveProposals: false,
+          canViewInvoices: true,
+          canMakePayments: true
+        }
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-201',
+        addressName: 'Corporate Tower DLF Phase 5',
+        type: 'Registered office',
+        line1: 'Tower B, Cyber City, Sector 24',
+        city: 'Gurugram',
+        state: 'Haryana',
+        country: 'India',
+        pinCode: '122002',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true
+      }
+    ],
+    documents: [
+      {
+        id: 'doc-201',
+        name: 'Singhal Tech - Vendor Master Setup Form',
+        category: 'Company Registration',
+        fileUrl: '/docs/singhal-vendor-setup.pdf',
+        fileSize: '1.1 MB',
+        uploadedAt: '2025-06-20',
+        uploadedBy: 'Rajesh Verma',
+        accessLevel: 'internal'
+      }
+    ],
+    communications: [
+      {
+        id: 'comm-201',
+        channel: 'email',
+        title: 'Outstanding Invoice INV-2026-003 Follow-up',
+        summary: 'Sent friendly reminder for ₹4.5L balance due against Tech Visionaries Summit.',
+        sender: 'Ketan Shah',
+        recipient: 'procurement@singhaltech.io',
+        timestamp: '2026-11-18 10:00',
+        outcome: 'Payment promised by Nov 25',
+        deliveryStatus: 'delivered'
+      }
+    ],
+    notes: [
+      {
+        id: 'note-201',
+        author: 'Rajesh Verma',
+        content: 'Rohan Mehta mentioned they want to double the booth space for their March 2027 demo day.',
+        createdAt: '2026-10-15',
+        visibility: 'sales',
+        isPinned: false,
+        priority: 'normal'
+      }
+    ],
+    feedback: [
+      {
+        id: 'fb-201',
+        eventId: 'evt-2026-002',
+        eventName: 'Tech Visionaries Summit',
+        rating: 4,
+        csatScore: 88,
+        serviceRating: 5,
+        venueRating: 4,
+        cateringRating: 4,
+        decorRating: 4,
+        comments: 'Excellent audio-visual production. Wi-Fi at the venue experienced temporary latency.',
+        recommendationScore: 8,
+        feedbackDate: '2026-10-16',
+        source: 'Corporate Feedback Portal'
+      }
+    ],
+    complaints: [
+      {
+        id: 'comp-201',
+        ticketNo: 'CMP-2026-001',
+        title: 'Breakout Session AV Switch Delay',
+        description: 'HDMI switcher in Room B had a 12-minute delay during the afternoon keynote.',
+        category: 'Vendor Delays',
+        priority: 'medium',
+        status: 'resolved',
+        assignedTo: 'Vikram Rathore',
+        createdAt: '2026-10-15',
+        resolvedAt: '2026-10-16',
+        resolutionNotes: 'Technician recalibrated fiber matrix and provided ₹25,000 credit adjustment on final bill.'
+      }
+    ]
   },
   {
     id: 'c-3',
+    customerCode: 'CUS-2026-00003',
     name: 'Devraj Kapoor',
+    displayName: 'Devraj & Sunita Kapoor',
+    customerType: 'Family',
+    category: 'VIP',
+    status: 'active',
     companyName: 'Kapoor Jewels & Heritage',
+    primaryContact: 'Devraj Kapoor',
     email: 'devraj@kapoorjewels.in',
+    alternateEmail: 'kapoor.wedding@gmail.com',
     phone: '+91 99888 77665',
+    alternatePhone: '+91 99888 77666',
+    website: 'https://kapoorjewels.in',
     gstin: '24AAECK5544R1Z0',
+    pan: 'AAECK5544R',
+    industry: 'Fine Jewelry & Luxury Retail',
+    dateOfBirth: '1975-12-04',
+    source: 'Referral',
+    accountManager: 'Rajesh Verma',
+    branchName: 'Mumbai HQ',
+    tags: ['VIP', 'Destination Wedding', 'Royal Rajputana', 'High Net Worth'],
+    internalNotes: 'Family patriarch. Organizing 3-day royal destination wedding at Umaid Bhawan. High focus on culinary excellence.',
     city: 'Jaipur',
+    state: 'Rajasthan',
     totalBookings: 1,
-    totalSpent: 7500000
+    totalSpent: 7500000,
+    totalInvoiced: 7500000,
+    totalOutstanding: 1250000,
+    advanceBalance: 2000000,
+    lastEventDate: '2026-12-20',
+    loyaltyPoints: 1800,
+    referralCount: 5,
+    referredBy: 'Oberoi Global',
+    registeredAt: '2026-02-01',
+    contacts: [
+      {
+        id: 'con-301',
+        name: 'Devraj Kapoor',
+        designation: 'Patriarch & Founder',
+        role: 'Authorized Signatory',
+        phone: '+91 99888 77665',
+        whatsapp: '+91 99888 77665',
+        email: 'devraj@kapoorjewels.in',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: true,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: true,
+          canApproveProposals: true,
+          canViewInvoices: true,
+          canMakePayments: true,
+          canViewEventDetails: true,
+          canUploadDocuments: true
+        }
+      },
+      {
+        id: 'con-302',
+        name: 'Sunita Kapoor',
+        designation: 'Family Trustee',
+        role: 'Family Representative',
+        phone: '+91 99888 77666',
+        whatsapp: '+91 99888 77666',
+        email: 'sunita.kapoor@gmail.com',
+        isPrimary: false,
+        isDecisionMaker: true,
+        isBillingContact: false,
+        portalAccess: true,
+        permissions: {
+          canViewQuotations: true,
+          canViewEventDetails: true,
+          canUploadDocuments: true
+        }
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-301',
+        addressName: 'Kapoor Haveli',
+        type: 'Residential address',
+        line1: '12 Heritage Enclave, C-Scheme',
+        city: 'Jaipur',
+        state: 'Rajasthan',
+        country: 'India',
+        pinCode: '302001',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true
+      },
+      {
+        id: 'addr-302',
+        addressName: 'Umaid Bhawan Destination Palace',
+        type: 'Event location',
+        line1: 'Circuit House Road, Cantt Area',
+        city: 'Jodhpur',
+        state: 'Rajasthan',
+        country: 'India',
+        pinCode: '342006',
+        isPrimaryBilling: false,
+        isPrimaryCommunication: false,
+        isPrimaryEvent: true
+      }
+    ],
+    documents: [
+      {
+        id: 'doc-301',
+        name: 'Kapoor Destination Wedding Mandate & Signed Scope',
+        category: 'Contract / Agreement',
+        fileUrl: '/docs/kapoor-destination-contract.pdf',
+        fileSize: '3.6 MB',
+        uploadedAt: '2026-03-01',
+        uploadedBy: 'Rajesh Verma',
+        accessLevel: 'internal'
+      }
+    ],
+    communications: [
+      {
+        id: 'comm-301',
+        channel: 'whatsapp',
+        title: 'Catering Menu Tasting Session Confirmed',
+        summary: 'Scheduled Royal Marwari banquet tasting at Oberoi Mumbai kitchen on Nov 22.',
+        sender: 'Priya Sharma',
+        recipient: 'Sunita Kapoor',
+        timestamp: '2026-11-16 14:00',
+        outcome: 'Confirmed by client',
+        deliveryStatus: 'read'
+      }
+    ],
+    notes: [
+      {
+        id: 'note-301',
+        author: 'Rajesh Verma',
+        content: 'Client requested surprise firework choreography synchronized with Sufi music troupe.',
+        createdAt: '2026-10-28',
+        visibility: 'operations',
+        isPinned: true,
+        priority: 'high'
+      }
+    ],
+    feedback: [],
+    complaints: []
+  },
+  {
+    id: 'c-4',
+    customerCode: 'CUS-2026-00004',
+    name: 'St. Xavier\'s Educational Trust',
+    displayName: 'St. Xavier\'s Trust & Alumni',
+    customerType: 'Institution',
+    category: 'Institutional',
+    status: 'active',
+    companyName: 'St. Xavier\'s Educational Trust',
+    primaryContact: 'Dr. Joseph Fernandes',
+    email: 'admin@xaviers.edu',
+    alternateEmail: 'alumni@xaviers.edu',
+    phone: '+91 98205 77889',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    totalBookings: 4,
+    totalSpent: 1650000,
+    totalInvoiced: 1650000,
+    totalOutstanding: 0,
+    advanceBalance: 0,
+    lastEventDate: '2026-09-05',
+    loyaltyPoints: 500,
+    referralCount: 1,
+    registeredAt: '2024-08-15',
+    accountManager: 'Priya Sharma',
+    branchName: 'Mumbai HQ',
+    tags: ['Institutional', 'Alumni Gala', 'Educational', 'Annual Day'],
+    contacts: [
+      {
+        id: 'con-401',
+        name: 'Dr. Joseph Fernandes',
+        designation: 'Principal & Executive Trustee',
+        role: 'Owner / Director',
+        phone: '+91 98205 77889',
+        email: 'admin@xaviers.edu',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: true,
+        portalAccess: true
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-401',
+        addressName: 'College Campus',
+        type: 'Registered office',
+        line1: '5 Mahapalika Marg, Dhobi Talao',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        pinCode: '400001',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true
+      }
+    ],
+    documents: [],
+    communications: [],
+    notes: [],
+    feedback: [
+      {
+        id: 'fb-401',
+        rating: 5,
+        csatScore: 94,
+        serviceRating: 5,
+        venueRating: 5,
+        cateringRating: 4,
+        decorRating: 5,
+        comments: '150th Anniversary Gala was celebrated with utmost dignity and grandeur.',
+        recommendationScore: 10,
+        feedbackDate: '2026-09-07',
+        source: 'Alumni Committee Review'
+      }
+    ],
+    complaints: []
+  },
+  {
+    id: 'c-5',
+    customerCode: 'CUS-2026-00005',
+    name: 'Maharashtra Tourism Development Corp',
+    displayName: 'MTDC Government Affairs',
+    customerType: 'Government',
+    category: 'Corporate',
+    status: 'active',
+    companyName: 'MTDC (Govt of Maharashtra)',
+    primaryContact: 'Sanjay Deshmukh, IAS',
+    email: 'events@mtdc.gov.in',
+    phone: '+91 98200 11990',
+    gstin: '27AAAGM0099K1Z1',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    totalBookings: 2,
+    totalSpent: 5200000,
+    totalInvoiced: 5200000,
+    totalOutstanding: 800000,
+    advanceBalance: 0,
+    lastEventDate: '2026-08-20',
+    loyaltyPoints: 900,
+    registeredAt: '2025-03-10',
+    accountManager: 'Rajesh Verma',
+    branchName: 'Mumbai HQ',
+    tags: ['Government', 'Public Event', 'Heritage Festival', 'Cultural'],
+    contacts: [
+      {
+        id: 'con-501',
+        name: 'Sanjay Deshmukh',
+        designation: 'Managing Director & IAS',
+        role: 'Authorized Signatory',
+        phone: '+91 98200 11990',
+        email: 'events@mtdc.gov.in',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: false,
+        portalAccess: true
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-501',
+        addressName: 'MTDC Central Secretariat',
+        type: 'Registered office',
+        line1: 'Madam Cama Road, Mantralaya',
+        city: 'Mumbai',
+        state: 'Maharashtra',
+        country: 'India',
+        pinCode: '400032',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true
+      }
+    ],
+    documents: [],
+    communications: [],
+    notes: [],
+    feedback: [],
+    complaints: []
+  },
+  {
+    id: 'c-6',
+    customerCode: 'CUS-2026-00006',
+    name: 'DNA Global Entertainment Agency',
+    displayName: 'DNA Entertainment (Agency Partner)',
+    customerType: 'Agency',
+    category: 'Referral Partner',
+    status: 'active',
+    companyName: 'DNA Global Entertainment LLP',
+    primaryContact: 'Kunal Kapoor',
+    email: 'kunal@dnaglobal.agency',
+    phone: '+91 98800 22110',
+    gstin: '29AAGCD4433P1Z9',
+    city: 'Bangalore',
+    state: 'Karnataka',
+    totalBookings: 5,
+    totalSpent: 9200000,
+    totalInvoiced: 9200000,
+    totalOutstanding: 0,
+    advanceBalance: 500000,
+    lastEventDate: '2026-10-30',
+    loyaltyPoints: 3400,
+    referralCount: 8,
+    registeredAt: '2024-11-05',
+    accountManager: 'Vikram Rathore',
+    branchName: 'Bangalore Hub',
+    tags: ['Agency Intermediary', 'Referral Partner', 'High Volume', 'Concerts'],
+    contacts: [
+      {
+        id: 'con-601',
+        name: 'Kunal Kapoor',
+        designation: 'Chief Booking Agent',
+        role: 'Owner / Director',
+        phone: '+91 98800 22110',
+        email: 'kunal@dnaglobal.agency',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: true,
+        portalAccess: true
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-601',
+        addressName: 'Bangalore Tech Park Studio',
+        type: 'Registered office',
+        line1: '100 Feet Road, Indiranagar',
+        city: 'Bangalore',
+        state: 'Karnataka',
+        country: 'India',
+        pinCode: '560038',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true
+      }
+    ],
+    documents: [],
+    communications: [],
+    notes: [],
+    feedback: [
+      {
+        id: 'fb-601',
+        rating: 5,
+        csatScore: 96,
+        serviceRating: 5,
+        venueRating: 5,
+        cateringRating: 4,
+        decorRating: 5,
+        comments: 'Consistently the best AV rigging partner across South India.',
+        recommendationScore: 10,
+        feedbackDate: '2026-10-31',
+        source: 'Agency Partner Quarterly Review'
+      }
+    ],
+    complaints: []
+  },
+  {
+    id: 'c-7',
+    customerCode: 'CUS-2026-00007',
+    name: 'Siddharth & Pooja Goenka',
+    displayName: 'Goenka Family Account',
+    customerType: 'Family',
+    category: 'Returning',
+    status: 'active',
+    primaryContact: 'Siddharth Goenka',
+    email: 'siddharth@goenkagroup.com',
+    phone: '+91 98111 22334',
+    city: 'Delhi NCR',
+    state: 'Delhi',
+    totalBookings: 2,
+    totalSpent: 3400000,
+    totalInvoiced: 3400000,
+    totalOutstanding: 0,
+    advanceBalance: 0,
+    lastEventDate: '2026-07-18',
+    loyaltyPoints: 780,
+    referralCount: 2,
+    registeredAt: '2025-05-12',
+    accountManager: 'Rajesh Verma',
+    branchName: 'Delhi NCR',
+    tags: ['Family Account', 'Returning', 'Anniversary', 'HNI Delhi'],
+    contacts: [
+      {
+        id: 'con-701',
+        name: 'Siddharth Goenka',
+        role: 'Family Representative',
+        phone: '+91 98111 22334',
+        email: 'siddharth@goenkagroup.com',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: true,
+        portalAccess: true
+      }
+    ],
+    addresses: [
+      {
+        id: 'addr-701',
+        addressName: 'Goenka Residence',
+        type: 'Residential address',
+        line1: '14 Amrita Shergill Marg',
+        city: 'New Delhi',
+        state: 'Delhi',
+        country: 'India',
+        pinCode: '110003',
+        isPrimaryBilling: true,
+        isPrimaryCommunication: true
+      }
+    ],
+    documents: [],
+    communications: [],
+    notes: [],
+    feedback: [],
+    complaints: []
+  },
+  {
+    id: 'c-8',
+    customerCode: 'CUS-2026-00008',
+    name: 'Apex Sports Club & Gymkhana',
+    displayName: 'Apex Gymkhana & Recreation',
+    customerType: 'Association',
+    category: 'Inactive',
+    status: 'inactive',
+    companyName: 'Apex Gymkhana Club Ltd',
+    primaryContact: 'Col. Ranjit Bakshi (Retd)',
+    email: 'secretary@apexgymkhana.in',
+    phone: '+91 98204 44332',
+    city: 'Mumbai',
+    state: 'Maharashtra',
+    totalBookings: 1,
+    totalSpent: 850000,
+    totalInvoiced: 850000,
+    totalOutstanding: 0,
+    advanceBalance: 0,
+    lastEventDate: '2025-04-10',
+    loyaltyPoints: 150,
+    registeredAt: '2024-02-18',
+    accountManager: 'Priya Sharma',
+    branchName: 'Mumbai HQ',
+    tags: ['Association', 'Club', 'Inactive', 'Reactivation Target'],
+    contacts: [
+      {
+        id: 'con-801',
+        name: 'Col. Ranjit Bakshi',
+        role: 'Owner / Director',
+        phone: '+91 98204 44332',
+        email: 'secretary@apexgymkhana.in',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: true,
+        portalAccess: false
+      }
+    ],
+    addresses: [],
+    documents: [],
+    communications: [],
+    notes: [],
+    feedback: [],
+    complaints: []
+  },
+  {
+    id: 'c-9',
+    customerCode: 'CUS-2026-00009',
+    name: 'Nexus Media Works',
+    displayName: 'Nexus Media (Blocked Account)',
+    customerType: 'Corporate',
+    category: 'Blacklisted',
+    status: 'blocked',
+    companyName: 'Nexus Media Works PVT LTD',
+    primaryContact: 'Ashwin Merchant',
+    email: 'ashwin@nexusmedia.co',
+    phone: '+91 98199 00998',
+    gstin: '07AAACN1234H1Z5',
+    city: 'Delhi NCR',
+    state: 'Delhi',
+    totalBookings: 1,
+    totalSpent: 1200000,
+    totalInvoiced: 1200000,
+    totalOutstanding: 680000,
+    advanceBalance: 0,
+    lastEventDate: '2025-11-20',
+    loyaltyPoints: 0,
+    registeredAt: '2025-09-01',
+    accountManager: 'Rajesh Verma',
+    branchName: 'Delhi NCR',
+    tags: ['Blacklisted', 'Payment Default', 'Legal Notice', 'Blocked'],
+    internalNotes: 'CAUTION: Defaulted on ₹6.8L post-event balance for 180+ days. Disputed catering invoices without cause. New contracts strictly prohibited.',
+    contacts: [
+      {
+        id: 'con-901',
+        name: 'Ashwin Merchant',
+        role: 'Owner / Director',
+        phone: '+91 98199 00998',
+        email: 'ashwin@nexusmedia.co',
+        isPrimary: true,
+        isDecisionMaker: true,
+        isBillingContact: true,
+        portalAccess: false
+      }
+    ],
+    addresses: [],
+    documents: [],
+    communications: [],
+    notes: [],
+    feedback: [],
+    complaints: [
+      {
+        id: 'comp-901',
+        ticketNo: 'CMP-2025-089',
+        title: 'Billing Dispute - Unapproved Deductions',
+        description: 'Client withheld ₹6.8L claiming sound permits were late.',
+        category: 'Billing / Invoice',
+        priority: 'urgent',
+        status: 'closed',
+        assignedTo: 'Rajesh Verma',
+        createdAt: '2025-12-01',
+        resolvedAt: '2025-12-15',
+        resolutionNotes: 'Legal demand notice issued under Negotiable Instruments Act. Account blocked.'
+      }
+    ]
   }
 ];
 

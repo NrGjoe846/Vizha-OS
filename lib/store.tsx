@@ -26,7 +26,15 @@ import {
   CRMEventFunction,
   CRMLeadScore,
   CRMLossRecord,
-  CRMNegotiation
+  CRMNegotiation,
+  CustomerContact,
+  CustomerAddress,
+  CustomerDocument,
+  CustomerCommunication,
+  CustomerNote,
+  CustomerFeedbackRecord,
+  CustomerComplaint,
+  CustomerStatus
 } from './types';
 import {
   DEMO_USERS,
@@ -57,9 +65,29 @@ interface ERPContextType {
   selectedBranch: string;
   setSelectedBranch: (branch: string) => void;
 
-  // Clients
+  // Clients & Customer Directory
   clients: Client[];
-  addClient: (client: Omit<Client, 'id' | 'totalBookings' | 'totalSpent'>) => void;
+  addClient: (client: Omit<Client, 'id' | 'totalBookings' | 'totalSpent'>) => Client;
+  updateCustomer: (id: string, updates: Partial<Client>) => void;
+  addCustomerContact: (customerId: string, contact: Omit<CustomerContact, 'id'>) => void;
+  updateCustomerContact: (customerId: string, contactId: string, updates: Partial<CustomerContact>) => void;
+  deleteCustomerContact: (customerId: string, contactId: string) => void;
+  addCustomerAddress: (customerId: string, address: Omit<CustomerAddress, 'id'>) => void;
+  updateCustomerAddress: (customerId: string, addressId: string, updates: Partial<CustomerAddress>) => void;
+  deleteCustomerAddress: (customerId: string, addressId: string) => void;
+  addCustomerDocument: (customerId: string, doc: Omit<CustomerDocument, 'id' | 'uploadedAt'>) => void;
+  addCustomerCommunication: (customerId: string, comm: Omit<CustomerCommunication, 'id' | 'timestamp'>) => void;
+  addCustomerNote: (customerId: string, note: Omit<CustomerNote, 'id' | 'createdAt'>) => void;
+  addCustomerFeedback: (customerId: string, fb: Omit<CustomerFeedbackRecord, 'id'>) => void;
+  addCustomerComplaint: (customerId: string, comp: Omit<CustomerComplaint, 'id' | 'ticketNo' | 'createdAt'>) => void;
+  updateCustomerComplaint: (customerId: string, complaintId: string, updates: Partial<CustomerComplaint>) => void;
+  mergeCustomers: (masterId: string, secondaryId: string, reason: string) => void;
+  archiveCustomer: (customerId: string, reason?: string) => void;
+  restoreCustomer: (customerId: string) => void;
+  blockCustomer: (customerId: string, reason: string) => void;
+  bulkUpdateCustomerStatus: (customerIds: string[], status: CustomerStatus) => void;
+  bulkAssignAccountManager: (customerIds: string[], manager: string) => void;
+  bulkAddCustomerTags: (customerIds: string[], tags: string[]) => void;
 
   // Leads & CRM Pipeline
   leads: Lead[];
@@ -289,15 +317,415 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const addClient = (clientData: Omit<Client, 'id' | 'totalBookings' | 'totalSpent'>) => {
+  const addClient = (clientData: Omit<Client, 'id' | 'totalBookings' | 'totalSpent'>): Client => {
+    const nextNum = clients.length + 1;
+    const generatedCode = clientData.customerCode || `CUS-2026-${String(nextNum).padStart(5, '0')}`;
+    const newId = `c-${Date.now()}`;
+
+    const defaultContact: CustomerContact = {
+      id: `con-${Date.now()}`,
+      name: clientData.primaryContact || clientData.name,
+      role: clientData.companyName ? 'Authorized Signatory' : 'Owner / Director',
+      phone: clientData.phone,
+      email: clientData.email,
+      isPrimary: true,
+      isDecisionMaker: true,
+      isBillingContact: true,
+      portalAccess: true,
+      permissions: {
+        canViewQuotations: true,
+        canApproveProposals: true,
+        canViewInvoices: true,
+        canMakePayments: true,
+        canViewEventDetails: true,
+        canUploadDocuments: true,
+        canManageContacts: true
+      }
+    };
+
+    const defaultAddress: CustomerAddress = {
+      id: `addr-${Date.now()}`,
+      addressName: 'Primary Location',
+      type: clientData.companyName ? 'Registered office' : 'Residential address',
+      line1: 'Main Road',
+      city: clientData.city || 'Mumbai',
+      state: clientData.state || 'Maharashtra',
+      country: 'India',
+      pinCode: '400001',
+      isPrimaryBilling: true,
+      isPrimaryCommunication: true,
+      isPrimaryEvent: false
+    };
+
     const newClient: Client = {
       ...clientData,
-      id: `c-${Date.now()}`,
+      id: newId,
+      customerCode: generatedCode,
+      displayName: clientData.displayName || (clientData.companyName ? `${clientData.name} (${clientData.companyName})` : clientData.name),
+      customerType: clientData.customerType || (clientData.companyName ? 'Corporate' : 'Individual'),
+      category: clientData.category || 'Regular',
+      status: clientData.status || 'active',
+      primaryContact: clientData.primaryContact || clientData.name,
       totalBookings: 0,
-      totalSpent: 0
+      totalSpent: 0,
+      totalInvoiced: 0,
+      totalOutstanding: 0,
+      advanceBalance: 0,
+      loyaltyPoints: 0,
+      referralCount: 0,
+      registeredAt: new Date().toISOString().split('T')[0],
+      branchName: clientData.branchName || selectedBranch !== 'All Branches' ? selectedBranch : 'Mumbai HQ',
+      accountManager: clientData.accountManager || 'Rajesh Verma',
+      contacts: clientData.contacts && clientData.contacts.length > 0 ? clientData.contacts : [defaultContact],
+      addresses: clientData.addresses && clientData.addresses.length > 0 ? clientData.addresses : [defaultAddress],
+      documents: clientData.documents || [],
+      communications: clientData.communications || [],
+      notes: clientData.notes || [],
+      feedback: clientData.feedback || [],
+      complaints: clientData.complaints || [],
+      relationships: clientData.relationships || [],
+      auditLogs: [
+        {
+          id: `aud-${Date.now()}`,
+          action: 'Created Customer Master Record',
+          performedBy: currentUser.name,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          details: `Registered ${clientData.name} (${generatedCode}) under ${clientData.customerType || 'General'} classification`
+        }
+      ]
     };
+
     setClients(prev => [newClient, ...prev]);
-    logAuditAction(`Created Client Account`, 'event', newClient.id, `Created client account for ${newClient.name} (${newClient.companyName || 'Individual'})`);
+    logAuditAction(`Created Customer Master`, 'event', newClient.id, `Created authoritative customer profile ${newClient.customerCode} for ${newClient.name}`);
+    return newClient;
+  };
+
+  const updateCustomer = (id: string, updates: Partial<Client>) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== id) return c;
+        const auditEntry = {
+          id: `aud-${Date.now()}`,
+          action: 'Updated Customer Profile',
+          performedBy: currentUser.name,
+          timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+          details: `Updated fields: ${Object.keys(updates).join(', ')}`
+        };
+        return {
+          ...c,
+          ...updates,
+          auditLogs: [auditEntry, ...(c.auditLogs || [])]
+        };
+      })
+    );
+    logAuditAction(`Updated Customer Profile`, 'event', id, `Updated customer master record`);
+  };
+
+  const addCustomerContact = (customerId: string, contactData: Omit<CustomerContact, 'id'>) => {
+    const newContact: CustomerContact = {
+      ...contactData,
+      id: `con-${Date.now()}`
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        const currentContacts = c.contacts || [];
+        // If new contact is primary, remove primary flag from others
+        const updatedContacts = newContact.isPrimary
+          ? currentContacts.map(con => ({ ...con, isPrimary: false }))
+          : currentContacts;
+
+        return {
+          ...c,
+          contacts: [...updatedContacts, newContact]
+        };
+      })
+    );
+    logAuditAction(`Added Contact Person`, 'event', customerId, `Added contact ${newContact.name} (${newContact.role})`);
+  };
+
+  const updateCustomerContact = (customerId: string, contactId: string, updates: Partial<CustomerContact>) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        const currentContacts = c.contacts || [];
+        return {
+          ...c,
+          contacts: currentContacts.map(con => (con.id === contactId ? { ...con, ...updates } : con))
+        };
+      })
+    );
+  };
+
+  const deleteCustomerContact = (customerId: string, contactId: string) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          contacts: (c.contacts || []).filter(con => con.id !== contactId)
+        };
+      })
+    );
+  };
+
+  const addCustomerAddress = (customerId: string, addressData: Omit<CustomerAddress, 'id'>) => {
+    const newAddress: CustomerAddress = {
+      ...addressData,
+      id: `addr-${Date.now()}`
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        const currentAddrs = c.addresses || [];
+        const updatedAddrs = newAddress.isPrimaryBilling
+          ? currentAddrs.map(a => ({ ...a, isPrimaryBilling: false }))
+          : currentAddrs;
+
+        return {
+          ...c,
+          addresses: [...updatedAddrs, newAddress]
+        };
+      })
+    );
+    logAuditAction(`Added Address`, 'event', customerId, `Added ${newAddress.type} (${newAddress.city})`);
+  };
+
+  const updateCustomerAddress = (customerId: string, addressId: string, updates: Partial<CustomerAddress>) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          addresses: (c.addresses || []).map(a => (a.id === addressId ? { ...a, ...updates } : a))
+        };
+      })
+    );
+  };
+
+  const deleteCustomerAddress = (customerId: string, addressId: string) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          addresses: (c.addresses || []).filter(a => a.id !== addressId)
+        };
+      })
+    );
+  };
+
+  const addCustomerDocument = (customerId: string, docData: Omit<CustomerDocument, 'id' | 'uploadedAt'>) => {
+    const newDoc: CustomerDocument = {
+      ...docData,
+      id: `doc-${Date.now()}`,
+      uploadedAt: new Date().toISOString().split('T')[0]
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          documents: [newDoc, ...(c.documents || [])]
+        };
+      })
+    );
+    logAuditAction(`Uploaded Customer Document`, 'event', customerId, `Uploaded ${newDoc.name} (${newDoc.category})`);
+  };
+
+  const addCustomerCommunication = (customerId: string, commData: Omit<CustomerCommunication, 'id' | 'timestamp'>) => {
+    const newComm: CustomerCommunication = {
+      ...commData,
+      id: `comm-${Date.now()}`,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16)
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          communications: [newComm, ...(c.communications || [])]
+        };
+      })
+    );
+  };
+
+  const addCustomerNote = (customerId: string, noteData: Omit<CustomerNote, 'id' | 'createdAt'>) => {
+    const newNote: CustomerNote = {
+      ...noteData,
+      id: `note-${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          notes: [newNote, ...(c.notes || [])]
+        };
+      })
+    );
+  };
+
+  const addCustomerFeedback = (customerId: string, fbData: Omit<CustomerFeedbackRecord, 'id'>) => {
+    const newFb: CustomerFeedbackRecord = {
+      ...fbData,
+      id: `fb-${Date.now()}`
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          feedback: [newFb, ...(c.feedback || [])]
+        };
+      })
+    );
+    logAuditAction(`Recorded Customer Feedback`, 'event', customerId, `Recorded rating ${newFb.rating}★ (${newFb.csatScore}% CSAT)`);
+  };
+
+  const addCustomerComplaint = (customerId: string, compData: Omit<CustomerComplaint, 'id' | 'ticketNo' | 'createdAt'>) => {
+    const ticketNo = `CMP-2026-${String(Math.floor(100 + Math.random() * 900))}`;
+    const newComplaint: CustomerComplaint = {
+      ...compData,
+      id: `comp-${Date.now()}`,
+      ticketNo,
+      createdAt: new Date().toISOString().split('T')[0]
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          complaints: [newComplaint, ...(c.complaints || [])]
+        };
+      })
+    );
+    logAuditAction(`Logged Customer Complaint`, 'event', customerId, `Created ticket ${ticketNo}: ${newComplaint.title}`);
+  };
+
+  const updateCustomerComplaint = (customerId: string, complaintId: string, updates: Partial<CustomerComplaint>) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id !== customerId) return c;
+        return {
+          ...c,
+          complaints: (c.complaints || []).map(comp => comp.id === complaintId ? { ...comp, ...updates } : comp)
+        };
+      })
+    );
+  };
+
+  const mergeCustomers = (masterId: string, secondaryId: string, reason: string) => {
+    const master = clients.find(c => c.id === masterId);
+    const secondary = clients.find(c => c.id === secondaryId);
+    if (!master || !secondary) return;
+
+    // 1. Re-associate all events from secondary to master
+    setEvents(prev => prev.map(e => e.clientId === secondaryId ? { ...e, clientId: masterId, clientName: master.name } : e));
+
+    // 2. Re-associate quotations from secondary to master
+    setQuotations(prev => prev.map(q => q.clientId === secondaryId ? { ...q, clientId: masterId, clientName: master.name } : q));
+
+    // 3. Re-associate invoices from secondary to master
+    setInvoices(prev => prev.map(inv => inv.clientId === secondaryId ? { ...inv, clientId: masterId, clientName: master.name } : inv));
+
+    // 4. Merge contacts, addresses, documents, notes, communications, feedback, complaints into master
+    const combinedContacts = [...(master.contacts || []), ...(secondary.contacts || [])];
+    const combinedAddresses = [...(master.addresses || []), ...(secondary.addresses || [])];
+    const combinedDocuments = [...(master.documents || []), ...(secondary.documents || [])];
+    const combinedNotes = [...(master.notes || []), ...(secondary.notes || [])];
+    const combinedComms = [...(master.communications || []), ...(secondary.communications || [])];
+    const combinedFeedback = [...(master.feedback || []), ...(secondary.feedback || [])];
+    const combinedComplaints = [...(master.complaints || []), ...(secondary.complaints || [])];
+
+    const auditEntryMaster = {
+      id: `aud-${Date.now()}`,
+      action: 'Merged Duplicate Customer Profile',
+      performedBy: currentUser.name,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      details: `Merged secondary record ${secondary.customerCode || secondary.id} (${secondary.name}) into this master record. Reason: ${reason}`
+    };
+
+    const auditEntrySecondary = {
+      id: `aud-${Date.now() + 1}`,
+      action: 'Profile Merged & Archived',
+      performedBy: currentUser.name,
+      timestamp: new Date().toISOString().replace('T', ' ').substring(0, 16),
+      details: `Merged into surviving master record ${master.customerCode || master.id} (${master.name}). Reason: ${reason}`
+    };
+
+    setClients(prev =>
+      prev.map(c => {
+        if (c.id === masterId) {
+          return {
+            ...c,
+            totalBookings: c.totalBookings + secondary.totalBookings,
+            totalSpent: c.totalSpent + secondary.totalSpent,
+            contacts: combinedContacts,
+            addresses: combinedAddresses,
+            documents: combinedDocuments,
+            notes: combinedNotes,
+            communications: combinedComms,
+            feedback: combinedFeedback,
+            complaints: combinedComplaints,
+            auditLogs: [auditEntryMaster, ...(c.auditLogs || [])]
+          };
+        }
+        if (c.id === secondaryId) {
+          return {
+            ...c,
+            status: 'archived',
+            mergedWithId: masterId,
+            auditLogs: [auditEntrySecondary, ...(c.auditLogs || [])]
+          };
+        }
+        return c;
+      })
+    );
+
+    logAuditAction(`Merged Duplicate Customers`, 'event', masterId, `Merged ${secondary.name} into ${master.name}. Re-assigned all events and financial ledgers.`);
+  };
+
+  const archiveCustomer = (customerId: string, reason = 'Archived via Customer Directory') => {
+    updateCustomer(customerId, { status: 'archived', internalNotes: reason });
+  };
+
+  const restoreCustomer = (customerId: string) => {
+    updateCustomer(customerId, { status: 'active' });
+  };
+
+  const blockCustomer = (customerId: string, reason: string) => {
+    updateCustomer(customerId, { status: 'blocked', internalNotes: reason });
+  };
+
+  const bulkUpdateCustomerStatus = (customerIds: string[], status: CustomerStatus) => {
+    setClients(prev => prev.map(c => customerIds.includes(c.id) ? { ...c, status } : c));
+    logAuditAction(`Bulk Status Update`, 'event', 'multiple', `Updated status to ${status} for ${customerIds.length} customers`);
+  };
+
+  const bulkAssignAccountManager = (customerIds: string[], manager: string) => {
+    setClients(prev => prev.map(c => customerIds.includes(c.id) ? { ...c, accountManager: manager } : c));
+    logAuditAction(`Bulk Manager Assignment`, 'event', 'multiple', `Assigned ${manager} to ${customerIds.length} customers`);
+  };
+
+  const bulkAddCustomerTags = (customerIds: string[], newTags: string[]) => {
+    setClients(prev =>
+      prev.map(c => {
+        if (!customerIds.includes(c.id)) return c;
+        const current = c.tags || [];
+        const merged = Array.from(new Set([...current, ...newTags]));
+        return { ...c, tags: merged };
+      })
+    );
+    logAuditAction(`Bulk Tag Assignment`, 'event', 'multiple', `Added tags [${newTags.join(', ')}] to ${customerIds.length} customers`);
   };
 
   const addLead = (leadData: Omit<Lead, 'id' | 'createdAt'>) => {
@@ -503,17 +931,24 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       };
       setClients(prev => prev.map(c => c.id === existingClient.id ? clientToUse : c));
     } else {
-      clientToUse = {
-        id: `c-${Date.now()}`,
+      const generatedCode = `CUS-2026-${String(clients.length + 1).padStart(5, '0')}`;
+      clientToUse = addClient({
         name: lead.clientName,
+        customerCode: generatedCode,
         companyName: lead.companyName || undefined,
+        displayName: lead.companyName ? `${lead.clientName} (${lead.companyName})` : lead.clientName,
+        customerType: lead.companyName ? 'Corporate' : 'Individual',
+        category: (lead.negotiation?.negotiatedPrice || lead.estimatedBudget) >= 5000000 ? 'VIP' : 'Regular',
+        status: 'active',
         email: lead.email,
         phone: lead.phone,
+        alternatePhone: lead.alternatePhone,
         city: lead.city || 'Mumbai',
-        totalBookings: 1,
-        totalSpent: lead.negotiation?.negotiatedPrice || lead.estimatedBudget
-      };
-      setClients(prev => [clientToUse, ...prev]);
+        source: lead.source,
+        branchName: lead.branchName || 'Mumbai HQ',
+        accountManager: assignedManager,
+        tags: [lead.eventType, 'Converted from Lead', lead.priority === 'urgent' ? 'High Value' : 'Standard']
+      });
     }
 
     // 2. Create Event Record
@@ -663,24 +1098,44 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
     const lead = leads.find(l => l.id === leadId);
     if (!lead) throw new Error('Lead not found');
 
-    const newClient: Client = {
-      id: `c-${Date.now()}`,
-      name: lead.clientName,
-      companyName: lead.companyName || undefined,
-      email: lead.email,
-      phone: lead.phone,
-      city: 'Mumbai',
-      totalBookings: 1,
-      totalSpent: lead.estimatedBudget
-    };
+    const existingClient = clients.find(c => c.name.toLowerCase() === lead.clientName.toLowerCase() || c.email.toLowerCase() === lead.email.toLowerCase());
+    let targetClient: Client;
+
+    if (existingClient) {
+      targetClient = {
+        ...existingClient,
+        totalBookings: existingClient.totalBookings + 1,
+        totalSpent: existingClient.totalSpent + (lead.negotiation?.negotiatedPrice || lead.estimatedBudget)
+      };
+      setClients(prev => prev.map(c => c.id === existingClient.id ? targetClient : c));
+    } else {
+      const generatedCode = `CUS-2026-${String(clients.length + 1).padStart(5, '0')}`;
+      targetClient = addClient({
+        name: lead.clientName,
+        customerCode: generatedCode,
+        companyName: lead.companyName || undefined,
+        displayName: lead.companyName ? `${lead.clientName} (${lead.companyName})` : lead.clientName,
+        customerType: lead.companyName ? 'Corporate' : 'Individual',
+        category: lead.estimatedBudget >= 5000000 ? 'VIP' : 'Regular',
+        status: 'active',
+        email: lead.email,
+        phone: lead.phone,
+        alternatePhone: lead.alternatePhone,
+        city: lead.city || 'Mumbai',
+        source: lead.source,
+        branchName: lead.branchName || 'Mumbai HQ',
+        accountManager: lead.assignedTo || 'Rajesh Verma',
+        tags: [lead.eventType, 'Converted from Lead']
+      });
+    }
 
     const newEvent: EventModel = {
       id: `evt-${Date.now()}`,
       code: `EVT-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
       title: lead.title,
       eventType: lead.eventType,
-      clientName: lead.clientName,
-      clientId: newClient.id,
+      clientName: targetClient.name,
+      clientId: targetClient.id,
       venueName: 'The Grand Oberoi Ballroom, Mumbai',
       managerName: 'Priya Sharma',
       startDate: lead.eventDate || new Date().toISOString().split('T')[0],
@@ -715,12 +1170,11 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
       ]
     };
 
-    setClients(prev => [newClient, ...prev]);
     setEvents(prev => [newEvent, ...prev]);
     updateLeadStage(leadId, 'converted');
     logAuditAction(`Converted Lead to Live Event`, 'event', newEvent.id, `Lead converted to active event "${newEvent.title}" under ${newEvent.managerName}`);
 
-    return { client: newClient, event: newEvent };
+    return { client: targetClient, event: newEvent };
   };
 
   const addVenue = (venueData: Omit<Venue, 'id'>) => {
@@ -1284,6 +1738,26 @@ export function ERPProvider({ children }: { children: React.ReactNode }) {
         setSelectedBranch,
         clients,
         addClient,
+        updateCustomer,
+        addCustomerContact,
+        updateCustomerContact,
+        deleteCustomerContact,
+        addCustomerAddress,
+        updateCustomerAddress,
+        deleteCustomerAddress,
+        addCustomerDocument,
+        addCustomerCommunication,
+        addCustomerNote,
+        addCustomerFeedback,
+        addCustomerComplaint,
+        updateCustomerComplaint,
+        mergeCustomers,
+        archiveCustomer,
+        restoreCustomer,
+        blockCustomer,
+        bulkUpdateCustomerStatus,
+        bulkAssignAccountManager,
+        bulkAddCustomerTags,
         leads,
         addLead,
         updateLead,
